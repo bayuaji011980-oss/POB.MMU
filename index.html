@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rekap Absensi SMT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+img{max-width:100%}[hidden]{display:none!important}
+body{margin:0}
+/* Layout: satu kolom mobile-first, dua tab — "Hari ini" (foto → rekap → alasan → simpan) dan "Riwayat" (periode → ringkasan → per hari → sering tidak hadir) */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --fg:#14212b; --muted:#5b6a75; --line:#d5dce1;
+  --accent:#0b5f8a; --accent-ink:#ffffff; --absent:#c2410c; --absent-bg:#fdeee6; --ok:#15803d; --ok-bg:#e6f4ea; --warn:#a16207;
+  --skill:#7c3aed; --helper:#0e7490; --staff:#64748b;
+  --r-sakit_surat:#2563eb; --r-sakit:#9333ea; --r-izin:#0d9488; --r-cuti:#65a30d; --r-alpa:#dc2626; --r-none:#94a3b8;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Barlow",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f171d; --surface:#17222a; --fg:#e6edf1; --muted:#93a3ae; --line:#2a3842;
+  --accent:#4fb3e3; --accent-ink:#06202e; --absent:#fb8a4f; --absent-bg:#3a1f12; --ok:#4ade80; --ok-bg:#12301d; --warn:#facc15;
+  --skill:#b69cff; --helper:#5fd4e6; --staff:#a7b4c2;
+  --r-sakit_surat:#60a5fa; --r-sakit:#c084fc; --r-izin:#2dd4bf; --r-cuti:#a3e635; --r-alpa:#f87171; --r-none:#64748b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171d; --surface:#17222a; --fg:#e6edf1; --muted:#93a3ae; --line:#2a3842;
+  --accent:#4fb3e3; --accent-ink:#06202e; --absent:#fb8a4f; --absent-bg:#3a1f12; --ok:#4ade80; --ok-bg:#12301d; --warn:#facc15;
+  --skill:#b69cff; --helper:#5fd4e6; --staff:#a7b4c2;
+  --r-sakit_surat:#60a5fa; --r-sakit:#c084fc; --r-izin:#2dd4bf; --r-cuti:#a3e635; --r-alpa:#f87171; --r-none:#64748b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:20px 56px;display:flex;flex-direction:column;gap:16px}
+header h1{font-family:var(--f-display);font-weight:700;font-size:30px;margin:0;line-height:1.05;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted)}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.tabs button{flex:1;border:none;background:none;font:600 15px var(--f-body);padding:10px;border-radius:7px;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.view{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{font-family:var(--f-display);font-size:20px;margin:0;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.btn{font:600 15px var(--f-body);border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;position:relative}
+button.primary,.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.danger{color:var(--absent);border-color:var(--absent)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,.btn:focus-within,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn input{position:absolute;width:1px;height:1px;opacity:0}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:84px;height:110px;border-radius:6px;overflow:hidden;border:1px solid var(--line);background:var(--bg)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .x{position:absolute;top:3px;right:3px;padding:2px 7px;font-size:13px;border-radius:5px}
+.thumb .st{position:absolute;left:0;right:0;bottom:0;font:500 10px var(--f-mono);padding:3px 4px;background:rgba(0,0,0,.6);color:#fff;text-align:center}
+.status{font-size:14px;color:var(--muted);min-height:1.2em;margin:0}
+.status.err{color:var(--absent)} .status.good{color:var(--ok)}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+input[type=text],input[type=password],input[type=date],input[type=month],select{font:500 15px var(--f-body);padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);min-width:0;width:100%}
+.dayname{font-size:13px;color:var(--muted)}
+.pill{font:500 11px var(--f-mono);letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.saved{color:var(--ok)} .pill.dirty{color:var(--warn)} .pill.new{color:var(--muted)}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tot{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg);min-width:0}
+.tot b{display:block;font-family:var(--f-display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.tot span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tot.abs b{color:var(--absent)} .tot.hadir b{color:var(--ok)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n,th.n{text-align:right} td.n{font-family:var(--f-mono);font-size:14px}
+td.n.abs{color:var(--absent)}
+tr.sum td{font-weight:600;border-bottom:none}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;flex:none}
+.k-skill{background:var(--skill)} .k-helper{background:var(--helper)} .k-staff{background:var(--staff)}
+.circ{flex:none;width:32px;height:32px;border:2px solid var(--absent);border-radius:50%;display:grid;place-items:center;font:500 12px var(--f-mono);color:var(--absent)}
+.abs-card{border-radius:8px;background:var(--absent-bg);padding:10px;display:flex;flex-direction:column;gap:8px}
+.abs-head{display:flex;align-items:center;gap:10px}
+.abs-head .nm{font-weight:600;overflow-wrap:anywhere}
+.abs-head .jb{font-size:13px;color:var(--muted)}
+.reasons{display:flex;flex-wrap:wrap;gap:6px}
+.reasons button{padding:6px 10px;font-size:13px;border-radius:999px;background:var(--surface)}
+.reasons button[aria-pressed="true"]{background:var(--rc);border-color:var(--rc);color:#fff}
+.abs-card input{font-size:14px;padding:7px 9px;background:var(--surface)}
+.empty{color:var(--muted);font-size:14px;margin:0}
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}
+.row .no{font:500 13px var(--f-mono);color:var(--muted);text-align:right}
+.row .who{min-width:0;display:flex;flex-direction:column}
+.row .who input{border:none;background:transparent;font:600 14px var(--f-body);padding:2px 0}
+.row .who select{border:none;background:transparent;color:var(--muted);font:13px var(--f-body);padding:0;width:auto}
+.row.abs{background:var(--absent-bg)} .row.abs .no{color:var(--absent)}
+.tg{font:600 12px var(--f-body);padding:6px 10px;border-radius:999px;min-width:84px;justify-content:center}
+.tg.on{border-color:var(--ok);color:var(--ok)} .tg.off{border-color:var(--absent);color:var(--absent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{padding:6px 10px;font-size:13px}
+.chips button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;margin:0;overflow-wrap:anywhere}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;padding:10px;border:1px solid var(--absent);border-radius:8px}
+/* riwayat */
+.days{display:flex;flex-direction:column;gap:2px}
+.day{display:grid;grid-template-columns:96px 1fr 70px;gap:10px;align-items:center;padding:8px 6px;border-radius:7px;cursor:pointer;border:none;background:none;text-align:left;font:inherit;color:inherit;width:100%}
+.day:hover{background:var(--bg)}
+.day .d{font:500 13px var(--f-mono)} .day .d small{display:block;font:12px var(--f-body);color:var(--muted)}
+.bar{height:14px;border-radius:4px;background:var(--ok-bg);overflow:hidden;display:flex;justify-content:flex-end}
+.bar i{display:block;height:100%;background:var(--absent)}
+.day .v{font:500 13px var(--f-mono);text-align:right} .day .v b{color:var(--absent)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.rank{display:flex;flex-direction:column;gap:6px}
+.rank details{border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.rank summary{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:9px 10px;cursor:pointer;list-style:none}
+.rank summary::-webkit-details-marker{display:none}
+.rank .pos{font:500 12px var(--f-mono);color:var(--muted);text-align:right}
+.rank .nm{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.rank .nm small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.rank .cnt{font-family:var(--f-display);font-size:24px;line-height:1;color:var(--absent);font-variant-numeric:tabular-nums;text-align:right}
+.rank .cnt small{display:block;font:11px var(--f-body);color:var(--muted)}
+.stack{display:flex;height:6px;border-radius:3px;overflow:hidden;grid-column:2/4;margin-top:2px}
+.stack i{display:block;height:100%}
+.rank ul{margin:0;padding:4px 12px 10px 48px;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.rank li{list-style:none;color:var(--muted)} .rank li b{color:var(--fg);font-weight:500;font-family:var(--f-mono);font-size:12px;margin-right:6px}
+.loading{color:var(--muted);font-size:14px}
+@media (max-width:440px){.tot b{font-size:28px}.meta{grid-template-columns:1fr}.day{grid-template-columns:78px 1fr 58px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">HSE · Daftar Hadir SMT</div>
+    <h1>Rekap Absensi SMT</h1>
+    <p>Foto lembar daftar hadir. Nomor yang dilingkari terbaca sebagai tidak hadir, lalu direkap dan disimpan per hari di HP ini.</p>
+  </header>
+
+  <details class="panel" id="setPanel">
+    <summary style="cursor:pointer;font:600 15px var(--f-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap">⚙️ Baca foto otomatis <span class="pill new" id="connPill">Belum aktif</span></summary>
+    <p class="hint">Opsional. Isi API key Gemini (gratis dari aistudio.google.com/apikey) supaya foto bisa dibaca otomatis. Key hanya disimpan di HP ini.</p>
+    <label class="f" for="gemKey">API key Gemini<input id="gemKey" type="password" autocomplete="off" placeholder="AIza…"></label>
+    <div class="btns"><button class="primary" id="keyBtn">Simpan key</button><button id="keyDel">Hapus key</button></div>
+    <p class="status" id="keyStatus" role="status"></p>
+  </details>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tabToday" aria-selected="true">Hari ini</button>
+    <button role="tab" id="tabHist" aria-selected="false">Riwayat</button>
+  </nav>
+
+  <!-- ===== HARI INI ===== -->
+  <div class="view" id="viewToday">
+    <section class="panel">
+      <h2>1 · Foto daftar hadir</h2>
+      <div class="btns">
+        <label class="btn primary">📷 Ambil foto<input id="camIn" type="file" accept="image/*" capture="environment" multiple></label>
+        <label class="btn">🖼️ Pilih dari galeri<input id="galIn" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="btns">
+        <button class="primary" id="readBtn" disabled>Baca &amp; hitung</button>
+        <button id="stopBtn" hidden>Stop</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+      <p class="hint">Satu lembar per foto, tegak, terang, semua nomor kelihatan. Boleh beberapa halaman sekaligus.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Tanggal SMT <span class="pill new" id="savePill">Belum disimpan</span></h2>
+      <div class="meta">
+        <label class="f" for="tgl">Tanggal<input id="tgl" type="date"></label>
+        <label class="f" for="waktu">Waktu<input id="waktu" type="text" placeholder="07.00 – selesai"></label>
+      </div>
+      <div class="dayname" id="dayName"></div>
+    </section>
+
+    <section class="panel" id="emptyToday" hidden>
+      <p class="empty">Belum ada data untuk tanggal ini. Foto daftar hadir di atas, atau buka hari lain dari tab Riwayat.</p>
+      <div class="btns" id="copyPrevZone"></div>
+    </section>
+
+    <div class="view" id="todayBody">
+      <section class="panel">
+        <h2>2 · Rekap</h2>
+        <div class="totals">
+          <div class="tot"><b id="tAll">0</b><span>Terdaftar</span></div>
+          <div class="tot hadir"><b id="tHadir">0</b><span>Hadir</span></div>
+          <div class="tot abs"><b id="tAbs">0</b><span>Tidak hadir</span></div>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Kategori</th><th class="n">Terdaftar</th><th class="n">Hadir</th><th class="n">Tdk hadir</th></tr></thead>
+          <tbody id="catBody"></tbody>
+        </table></div>
+      </section>
+
+      <section class="panel">
+        <h2>3 · Yang tidak hadir &amp; alasannya</h2>
+        <p class="hint">Ketuk alasan untuk tiap orang. Keterangan boleh dikosongkan.</p>
+        <div id="absList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </section>
+
+      <section class="panel">
+        <div class="btns">
+          <button class="primary" id="saveBtn">💾 Simpan ke riwayat</button>
+          <button id="copyBtn">Salin teks laporan</button>
+        </div>
+        <p class="status" id="saveStatus" role="status"></p>
+        <pre class="wa" id="waText"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Daftar lengkap</h2>
+        <p class="hint">Kalau ada yang salah baca, ketuk Hadir/Tidak hadir, ubah nama, atau ganti kategori.</p>
+        <div class="chips" id="filter">
+          <button data-f="all" aria-pressed="true">Semua</button>
+          <button data-f="abs" aria-pressed="false">Tidak hadir</button>
+          <button data-f="skill" aria-pressed="false">Skill</button>
+          <button data-f="helper" aria-pressed="false">Helper</button>
+          <button data-f="staff" aria-pressed="false">Staff</button>
+        </div>
+        <div class="rows" id="rows"></div>
+        <div id="delZone"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== RIWAYAT ===== -->
+  <div class="view" id="viewHist" hidden>
+    <section class="panel">
+      <h2>Data</h2>
+      <div class="btns">
+        <button id="reloadBtn">🔄 Muat ulang</button>
+        <button id="exportBtn">⬇️ Backup (JSON)</button>
+        <label class="btn">⬆️ Impor backup<input id="importIn" type="file" accept="application/json,.json"></label>
+      </div>
+      <p class="status" id="dataStatus" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Periode</h2>
+      <div class="chips" id="modeChips">
+        <button data-m="month" aria-pressed="true">Per bulan</button>
+        <button data-m="range" aria-pressed="false">Dari tanggal – sampai</button>
+        <button data-m="all" aria-pressed="false">Semua</button>
+      </div>
+      <div id="monthBox"><label class="f" for="bulan">Bulan<input id="bulan" type="month"></label></div>
+      <div class="meta" id="rangeBox" hidden>
+        <label class="f" for="dari">Dari<input id="dari" type="date"></label>
+        <label class="f" for="sampai">Sampai<input id="sampai" type="date"></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Ringkasan <span class="dayname" id="periodLabel"></span></h2>
+      <div class="totals">
+        <div class="tot"><b id="hDays">0</b><span>Hari SMT</span></div>
+        <div class="tot hadir"><b id="hRate">–</b><span>Rata² hadir</span></div>
+        <div class="tot abs"><b id="hAbs">0</b><span>Total absen</span></div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Alasan</th><th class="n">Jumlah</th></tr></thead>
+        <tbody id="reasonBody"></tbody>
+      </table></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Kategori</th><th class="n">Rata² terdaftar</th><th class="n">Total absen</th></tr></thead>
+        <tbody id="hCatBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel">
+      <h2>Sering tidak hadir</h2>
+      <div class="legend" id="legend"></div>
+      <div class="chips" id="rankFilter">
+        <button data-f="all" aria-pressed="true">Semua</button>
+        <button data-f="skill" aria-pressed="false">Skill</button>
+        <button data-f="helper" aria-pressed="false">Helper</button>
+        <button data-f="staff" aria-pressed="false">Staff</button>
+      </div>
+      <div class="rank" id="rank"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Per hari</h2>
+      <p class="hint">Ketuk satu hari untuk membuka dan mengedit rekapnya.</p>
+      <div class="legend"><span><i class="sw" style="background:var(--ok-bg);border:1px solid var(--line)"></i>Hadir</span><span><i class="sw" style="background:var(--absent)"></i>Tidak hadir</span></div>
+      <div class="days" id="days"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* Riwayat tersimpan di memori browser (localStorage) HP yang membuka link ini.
+   Pindah HP: tab Riwayat → Backup, lalu Impor di HP baru. */
+const GEMINI_MODEL = "gemini-2.5-flash";
+const DATA_AWAL = {"tanggal":"2026-10-08","waktu":"07.00 – selesai","savedAt":"2026-10-08T01:40:00.000Z","rows":[{"no":1,"nama":"Prasetyo Rahardjo","jabatan":"Site Manager","cat":"staff","absen":false,"alasan":"","ket":""},{"no":2,"nama":"Tobroni","jabatan":"Supervisor","cat":"staff","absen":false,"alasan":"","ket":""},{"no":3,"nama":"Bayu Aji Sentiko","jabatan":"HSE Coordinator","cat":"staff","absen":false,"alasan":"","ket":""},{"no":4,"nama":"Rizal Muzakir","jabatan":"Field Engineer","cat":"staff","absen":false,"alasan":"","ket":""},{"no":5,"nama":"Aditya Rahmatulah","jabatan":"Quality Control","cat":"staff","absen":false,"alasan":"","ket":""},{"no":6,"nama":"Waluyo Tri Utomo","jabatan":"QC Inspektor","cat":"staff","absen":false,"alasan":"","ket":""},{"no":7,"nama":"Akh. Nur Hidayat","jabatan":"Paramedic","cat":"staff","absen":false,"alasan":"","ket":""},{"no":8,"nama":"Chyntya Intan Valenia","jabatan":"Admin QC","cat":"staff","absen":false,"alasan":"","ket":""},{"no":9,"nama":"Reni Wulandari","jabatan":"Admin QC","cat":"staff","absen":false,"alasan":"","ket":""},{"no":10,"nama":"M. Subhan","jabatan":"Driver","cat":"staff","absen":false,"alasan":"","ket":""},{"no":11,"nama":"Moh. Shoinun","jabatan":"Driver","cat":"staff","absen":false,"alasan":"","ket":""},{"no":12,"nama":"Linda Ayu Ramadani","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":13,"nama":"Amalia Nur Alfina","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":14,"nama":"Aliya Puspitasari","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":15,"nama":"Viola Rahmadini","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":16,"nama":"Sugiono","jabatan":"Foreman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":17,"nama":"Tarmuji","jabatan":"Foreman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":18,"nama":"Ngationo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":19,"nama":"Lasmo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":20,"nama":"Widodo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":21,"nama":"Akhmad Jamaludin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":22,"nama":"Andry Sunaryo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":23,"nama":"Sunarto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":24,"nama":"M. Wiji Utomo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":25,"nama":"Sa'dun","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":26,"nama":"Mochammad Muzaedin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":27,"nama":"Kacung Agus P.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":28,"nama":"Muhammad Alif","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":29,"nama":"Prayuda Akbar","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":30,"nama":"M. Wahyudi","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":31,"nama":"Sunjoto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":32,"nama":"Jupriono","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":33,"nama":"Ahmad Erwin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":34,"nama":"Kasnadi","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":35,"nama":"Ali Mustofa","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":36,"nama":"Arif Hidayatullah","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":37,"nama":"Yaskun","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":38,"nama":"Deny Wibowo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":39,"nama":"M. Sirojul M.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":40,"nama":"Heri Purwanto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":41,"nama":"Rahmadani Yusuf","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":42,"nama":"Aldo Langgeng W.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":43,"nama":"M. Sofyan Dimas Eka","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":44,"nama":"Winarno","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":45,"nama":"Musta'in","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":46,"nama":"Kevin Putra","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":47,"nama":"Agus Purwanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":48,"nama":"Habib Ardiansyah","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":49,"nama":"Sakhuan","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":50,"nama":"Reggi Andhika Azhi Hamdhani","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":51,"nama":"Syaiful Anwar","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":52,"nama":"Syai'in","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":53,"nama":"Ahmad Zaki Al Amin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":54,"nama":"Herman Felani","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":55,"nama":"Alif Setyo Budi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":56,"nama":"Muhammad Syaifudin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":57,"nama":"Ilal Muslimin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":58,"nama":"Kiki Dwi Prastyo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":59,"nama":"Winaryo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":60,"nama":"Ahmad Bayu","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":61,"nama":"Lamsi","jabatan":"Helper","cat":"helper","absen":true,"alasan":"","ket":""},{"no":62,"nama":"Susanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":63,"nama":"Charis Ilham K.","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":64,"nama":"Ahmad Nur Efendi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":65,"nama":"Arga Setya Nawala","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":66,"nama":"Sugeng Agung Santoso","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":67,"nama":"Muhammad Dodi","jabatan":"Helper","cat":"helper","absen":true,"alasan":"","ket":""},{"no":68,"nama":"Handa Rama Novantio","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":69,"nama":"Muhammad Dani Ardinata","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":70,"nama":"Budi Rahayu","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":71,"nama":"Hendro Sasmito","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":72,"nama":"Juditomo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":73,"nama":"Muntakip","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":74,"nama":"M. Dhevit","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":75,"nama":"Ahmad Wiranto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":76,"nama":"Jamin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":77,"nama":"Sarmadi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":78,"nama":"Hendrik Eko","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":79,"nama":"Gilang Febriyansah","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":80,"nama":"Darmawan Eko","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":81,"nama":"Rizki Kristiyanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":82,"nama":"Gunanto Abdul Hadi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":83,"nama":"Narto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""}]};
+
+const CATS = {skill:"Skill",helper:"Helper",staff:"Staff / Pengawas"};
+const REASONS = [
+  ["sakit_surat","Sakit – ada surat"],
+  ["sakit","Sakit – tanpa surat"],
+  ["izin","Izin / urusan lain"],
+  ["cuti","Cuti"],
+  ["alpa","Tanpa keterangan"],
+];
+const RLABEL = Object.fromEntries(REASONS); RLABEL[""]="Belum diisi";
+const RKEYS = [...REASONS.map(r=>r[0]),""];
+const rcolor = k => `var(--r-${k||"none"})`;
+const catOf = j => { j=(j||"").toLowerCase(); if(j.includes("skill")||j.includes("insul")) return "skill"; if(j.includes("helper")) return "helper"; return "staff"; };
+const keyOf = n => String(n||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const fmtLong = iso => { try{ return new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }catch{ return iso; } };
+const fmtShort = iso => { try{ return new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short"}); }catch{ return iso; } };
+const fmtDay = iso => { try{ return new Date(iso+"T00:00:00").toLocaleDateString("id-ID",{weekday:"short"}); }catch{ return ""; } };
+const ls = { get(k){ try{ return localStorage.getItem(k); }catch{ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch{} } };
+
+let cur = {tanggal:todayISO(), waktu:"", rows:[]};
+let dirty=false, files=[], filt="all", aborted=false, reading=false;
+let riwayat = new Map();
+let connected=false, geminiOn=false;
+
+/* ---------- PENYIMPANAN DI HP + GEMINI ---------- */
+const STORE="smt_riwayat";
+function readStore(){ try{ return JSON.parse(localStorage.getItem(STORE)||"[]"); }catch{ return null; } }
+function writeStore(list){ localStorage.setItem(STORE, JSON.stringify(list)); }
+const PROMPT=`Gambar ini adalah foto satu halaman lembar "Daftar Hadir Safety Morning Talk (SMT)" proyek konstruksi di Indonesia. Kolom: No, Nama, Jabatan, Tanda Tangan.
+Baca SETIAP baris yang punya nama:
+- "no": nomor urut (angka).
+- "nama": nama persis seperti tertulis.
+- "jabatan": isi kolom Jabatan (contoh: Skill Insulation, Helper, Foreman, Safetyman, Driver, Supervisor).
+- "dilingkari": true jika NOMOR urut baris itu diberi lingkaran tangan (pulpen) — artinya tidak hadir; false jika tidak. Patokannya hanya lingkaran di nomor, bukan ada/tidaknya tanda tangan.
+Abaikan baris kosong tanpa nama. Isi "waktu" dengan isi kolom Waktu jika ada di halaman ini, kalau tidak "".
+Balas HANYA JSON: {"waktu":"","rows":[{"no":29,"nama":"Prayuda Akbar","jabatan":"Skill Insulation","dilingkari":true}]}`;
+async function api(action, payload={}){
+  if(action==="list"){ const l=readStore(); if(l===null) throw new Error("Memori browser tidak bisa dibaca (mode penyamaran?)."); return {items:l}; }
+  if(action==="save"){ const l=(readStore()||[]).filter(d=>d.tanggal!==payload.data.tanggal); l.push(payload.data);
+    try{ writeStore(l); }catch{ throw new Error("Memori browser penuh atau diblokir. Buat Backup lalu hapus hari-hari lama."); } return {}; }
+  if(action==="delete"){ writeStore((readStore()||[]).filter(d=>d.tanggal!==payload.tanggal)); return {}; }
+  if(action==="read"){
+    const key=ls.get("smt_gemini_key"); if(!key) throw new Error("API key Gemini belum diisi.");
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:payload.mime,data:payload.image}}]}],generationConfig:{responseMimeType:"application/json",temperature:0}})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(r.status===400||r.status===403?"API key Gemini tidak valid.":r.status===429?"Kuota Gemini habis, coba lagi nanti.":"Gemini error "+r.status+(j.error?.message?": "+j.error.message:""));
+    const text=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join(""); const m=text.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error("Hasil bacaan bukan JSON. Coba lagi."); return {result:JSON.parse(m[0])};
+  }
+}
+function setConn(){ geminiOn=!!ls.get("smt_gemini_key"); const p=$("connPill"); p.className="pill "+(geminiOn?"saved":"new"); p.textContent=geminiOn?"Aktif":"Belum aktif"; }
+async function connect(){
+  connected=true; setConn(); $("gemKey").value=ls.get("smt_gemini_key")||"";
+  const l=readStore();
+  if(l && !l.length && !ls.get("smt_seeded")){ try{ writeStore([DATA_AWAL]); ls.set("smt_seeded","1"); }catch{} }
+  try{ navigator.storage?.persist?.(); }catch{}
+  loadAll();
+}
+function loadAll(){
+  try{ const j={items:readStore()}; if(j.items===null) throw new Error("Memori browser tidak bisa dibaca (mode penyamaran?).");
+    riwayat=new Map(j.items.map(d=>[d.tanggal,d]));
+    stat($("dataStatus"),`${riwayat.size} hari tersimpan di HP ini. Buat Backup sebulan sekali supaya aman.`,"good"); }
+  catch(e){ stat($("dataStatus"),e.message,"err"); }
+  afterLoad();
+}
+function afterLoad(){
+  if(!dirty){ if(riwayat.has(cur.tanggal)) loadDay(cur.tanggal); else renderToday(); } else pill();
+  renderHist();
+}
+$("keyBtn").onclick=()=>{ const k=$("gemKey").value.trim(); if(!k){ stat($("keyStatus"),"Isi key dulu.","err"); return; } ls.set("smt_gemini_key",k); setConn(); stat($("keyStatus"),"Key tersimpan. Baca foto aktif.","good"); };
+$("keyDel").onclick=()=>{ try{ localStorage.removeItem("smt_gemini_key"); }catch{} $("gemKey").value=""; setConn(); stat($("keyStatus"),"Key dihapus."); };
+
+/* ---------- HARI INI ---------- */
+function setDirty(v){ dirty=v; pill(); }
+function pill(){
+  const p=$("savePill"); const saved=riwayat.has(cur.tanggal);
+  if(!cur.rows.length){ p.className="pill new"; p.textContent= saved?"Tersimpan":"Belum ada data"; return; }
+  if(dirty){ p.className="pill dirty"; p.textContent= saved?"Ada perubahan – belum disimpan":"Belum disimpan"; }
+  else if(saved){ p.className="pill saved"; p.textContent="Tersimpan ✓"; }
+  else { p.className="pill new"; p.textContent="Belum disimpan"; }
+}
+function renderToday(){
+  $("tgl").value=cur.tanggal; $("waktu").value=cur.waktu||""; $("dayName").textContent=fmtLong(cur.tanggal);
+  const rows=cur.rows, has=rows.length>0;
+  $("emptyToday").hidden=has; $("todayBody").hidden=!has; pill();
+  renderCopyPrev();
+  if(!has) return;
+  const abs=rows.filter(r=>r.absen);
+  $("tAll").textContent=rows.length; $("tAbs").textContent=abs.length; $("tHadir").textContent=rows.length-abs.length;
+  let h="";
+  for(const k of ["skill","helper","staff"]){ const all=rows.filter(r=>r.cat===k).length, a=rows.filter(r=>r.cat===k&&r.absen).length;
+    h+=`<tr><td><span class="dot k-${k}"></span>${CATS[k]}</td><td class="n">${all}</td><td class="n">${all-a}</td><td class="n${a?" abs":""}">${a}</td></tr>`; }
+  h+=`<tr class="sum"><td>Total</td><td class="n">${rows.length}</td><td class="n">${rows.length-abs.length}</td><td class="n${abs.length?" abs":""}">${abs.length}</td></tr>`;
+  $("catBody").innerHTML=h;
+
+  const box=$("absList"); box.innerHTML="";
+  if(!abs.length) box.innerHTML=`<p class="empty">Semua hadir. Tidak ada nomor yang dilingkari.</p>`;
+  for(const r of abs){
+    const c=document.createElement("div"); c.className="abs-card";
+    c.innerHTML=`<div class="abs-head"><span class="circ"></span><div style="min-width:0"><div class="nm"></div><div class="jb"></div></div></div><div class="reasons"></div><input type="text" placeholder="Keterangan (opsional), mis. surat dokter Klinik Pratama">`;
+    c.querySelector(".circ").textContent=r.no; c.querySelector(".nm").textContent=r.nama; c.querySelector(".jb").textContent=`${r.jabatan} · ${CATS[r.cat]}`;
+    const rb=c.querySelector(".reasons");
+    for(const [k,l] of REASONS){ const b=document.createElement("button"); b.textContent=l; b.style.setProperty("--rc",rcolor(k)); b.setAttribute("aria-pressed",r.alasan===k);
+      b.onclick=()=>{ r.alasan = r.alasan===k?"":k; setDirty(true); renderToday(); }; rb.appendChild(b); }
+    const inp=c.querySelector("input"); inp.id="ket-"+r.no; inp.value=r.ket||"";
+    inp.oninput=()=>{ r.ket=inp.value; setDirty(true); $("waText").textContent=reportText(); };
+    box.appendChild(c);
+  }
+  $("waText").textContent=reportText();
+
+  const rb=$("rows"); rb.innerHTML="";
+  rows.forEach((r,i)=>{
+    if(filt==="abs"&&!r.absen) return; if(CATS[filt]&&r.cat!==filt) return;
+    const d=document.createElement("div"); d.className="row"+(r.absen?" abs":"");
+    d.innerHTML=`<div class="no"></div><div class="who"><input id="nm-${i}" aria-label="Nama"><select id="ct-${i}" aria-label="Kategori"><option value="skill">Skill</option><option value="helper">Helper</option><option value="staff">Staff / Pengawas</option></select></div><button class="tg ${r.absen?"off":"on"}">${r.absen?"Tidak hadir":"Hadir"}</button>`;
+    d.querySelector(".no").textContent=r.no;
+    const inp=d.querySelector("input"); inp.value=r.nama; inp.onchange=()=>{r.nama=inp.value; setDirty(true); renderToday();};
+    const sel=d.querySelector("select"); sel.value=r.cat; sel.onchange=()=>{r.cat=sel.value; setDirty(true); renderToday();};
+    d.querySelector("button").onclick=()=>{ r.absen=!r.absen; if(!r.absen){r.alasan="";r.ket="";} setDirty(true); renderToday(); };
+    rb.appendChild(d);
+  });
+  renderDelZone();
+}
+/* tanpa baca foto: salin daftar nama dari hari terakhir, semua hadir, lalu klik yang tidak hadir */
+function renderCopyPrev(){
+  const z=$("copyPrevZone"); if(!z) return; z.innerHTML="";
+  if(cur.rows.length) return;
+  const prev=[...riwayat.keys()].filter(t=>t<cur.tanggal).sort().pop() || [...riwayat.keys()].sort().pop();
+  if(!prev) return;
+  const b=document.createElement("button"); b.textContent=`📋 Pakai daftar nama dari ${fmtShort(prev)} (semua hadir, lalu klik yang tidak hadir)`;
+  b.onclick=()=>{ cur.rows=(riwayat.get(prev).rows||[]).map(r=>({no:r.no,nama:r.nama,jabatan:r.jabatan,cat:r.cat,absen:false,alasan:"",ket:""})); setDirty(true); filt="all"; renderToday(); };
+  z.appendChild(b);
+}
+function renderDelZone(state){
+  const z=$("delZone"); z.innerHTML="";
+  if(!riwayat.has(cur.tanggal)) return;
+  if(state==="ask"){
+    z.innerHTML=`<div class="confirm">Hapus rekap ${fmtLong(cur.tanggal)} dari riwayat?<button class="danger" id="delYes">Ya, hapus</button><button id="delNo">Batal</button></div>`;
+    $("delNo").onclick=()=>renderDelZone(); $("delYes").onclick=delDay;
+  } else { z.innerHTML=`<button class="danger" id="delAsk" style="margin-top:8px">Hapus rekap tanggal ini dari riwayat</button>`; $("delAsk").onclick=()=>renderDelZone("ask"); }
+}
+function reportText(){
+  const rows=cur.rows, abs=rows.filter(r=>r.absen);
+  const c=k=>{const all=rows.filter(r=>r.cat===k).length,a=rows.filter(r=>r.cat===k&&r.absen).length;return {all,a,h:all-a};};
+  const s=c("skill"),h=c("helper"),st=c("staff");
+  let t=`*REKAP DAFTAR HADIR SMT*\n${fmtLong(cur.tanggal)}${cur.waktu?" | "+cur.waktu:""}\n\n`;
+  t+=`Terdaftar   : ${rows.length} orang\nHadir       : ${rows.length-abs.length} orang\nTidak hadir : ${abs.length} orang\n\n`;
+  t+=`Skill  : ${s.h} hadir / ${s.all} (tdk hadir ${s.a})\nHelper : ${h.h} hadir / ${h.all} (tdk hadir ${h.a})\nStaff  : ${st.h} hadir / ${st.all} (tdk hadir ${st.a})\n`;
+  if(abs.length) t+=`\n*Tidak hadir:*\n`+abs.map(r=>`${r.no}. ${r.nama} (${CATS[r.cat].split(" ")[0]}) – ${RLABEL[r.alasan||""]}${r.ket?" – "+r.ket:""}`).join("\n");
+  return t;
+}
+function loadDay(iso){
+  const d=riwayat.get(iso);
+  cur = d ? {tanggal:iso, waktu:d.waktu||"", rows:(d.rows||[]).map(r=>({...r}))} : {tanggal:iso, waktu:cur.waktu, rows:[]};
+  setDirty(false); renderToday();
+}
+$("tgl").onchange=e=>{
+  const iso=e.target.value; if(!iso) return;
+  if(cur.rows.length && dirty && !riwayat.has(iso)){ cur.tanggal=iso; setDirty(true); renderToday(); return; }
+  if(riwayat.has(iso)) loadDay(iso); else { cur={tanggal:iso,waktu:cur.waktu,rows:[]}; setDirty(false); renderToday(); }
+};
+$("waktu").oninput=e=>{ cur.waktu=e.target.value; setDirty(true); $("waText").textContent=reportText(); };
+$("filter").onclick=e=>{const b=e.target.closest("button"); if(!b) return; filt=b.dataset.f; for(const x of $("filter").children) x.setAttribute("aria-pressed",x===b); renderToday();};
+$("copyBtn").onclick=()=>{const t=reportText(); navigator.clipboard.writeText(t).then(()=>{$("copyBtn").textContent="Tersalin ✓"; setTimeout(()=>$("copyBtn").textContent="Salin teks laporan",1500);}).catch(()=>{const r=document.createRange(); r.selectNodeContents($("waText")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $("copyBtn").textContent="Teks dipilih – salin manual";});};
+function stat(el,msg,cls){ el.textContent=msg; el.className="status"+(cls?" "+cls:""); }
+
+function bodyOf(c){ return {tanggal:c.tanggal, waktu:c.waktu||"", savedAt:new Date().toISOString(),
+  rows:c.rows.map(r=>({no:r.no,nama:r.nama,jabatan:r.jabatan,cat:r.cat,absen:!!r.absen,alasan:r.alasan||"",ket:r.ket||""}))}; }
+$("saveBtn").onclick=async()=>{
+  const pending=cur.rows.filter(r=>r.absen&&!r.alasan).length;
+  $("saveBtn").disabled=true; stat($("saveStatus"),"Menyimpan…");
+  const body=bodyOf(cur);
+  try{ const sv=await api("save",{data:body}); riwayat.set(cur.tanggal,body); setDirty(false);
+    stat($("saveStatus"),`Tersimpan untuk ${fmtLong(cur.tanggal)}.`+(pending?` ${pending} orang belum diisi alasannya — bisa dilengkapi nanti lalu simpan lagi.`:""),"good"); renderToday(); renderHist(); }
+  catch(e){ stat($("saveStatus"),"Gagal menyimpan: "+e.message,"err"); }
+  $("saveBtn").disabled=false;
+};
+async function delDay(){
+  try{ await api("delete",{tanggal:cur.tanggal}); riwayat.delete(cur.tanggal);  cur.rows=[]; setDirty(false); stat($("saveStatus"),""); renderToday(); renderHist(); }
+  catch(e){ stat($("saveStatus"),"Gagal menghapus: "+e.message,"err"); }
+}
+
+/* ---------- foto ---------- */
+function addFiles(list){ for(const f of list) if(f.type.startsWith("image/")) files.push({f,url:URL.createObjectURL(f),st:"siap"}); drawThumbs(); }
+function drawThumbs(){
+  const t=$("thumbs"); t.innerHTML="";
+  files.forEach((x,i)=>{const d=document.createElement("div"); d.className="thumb"; d.innerHTML=`<img alt="Foto halaman ${i+1}"><button class="x" aria-label="Hapus foto">×</button><div class="st"></div>`; d.querySelector("img").src=x.url; d.querySelector(".st").textContent=`Hal ${i+1} · ${x.st}`; d.querySelector(".x").onclick=()=>{files.splice(i,1); drawThumbs();}; t.appendChild(d);});
+  $("readBtn").disabled=!files.length||reading;
+}
+$("camIn").onchange=e=>{addFiles(e.target.files); e.target.value="";};
+$("galIn").onchange=e=>{addFiles(e.target.files); e.target.value="";};
+
+/* perkecil foto ke maks 2000px JPEG supaya cepat dikirim */
+function toJpegBase64(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(); img.onload=()=>{
+      const max=2000, s=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement("canvas"); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
+    }; img.onerror=()=>rej(new Error("Foto tidak bisa dibuka")); img.src=URL.createObjectURL(file);
+  });
+}
+$("stopBtn").onclick=()=>{ aborted=true; };
+$("readBtn").onclick=async()=>{
+    if(!geminiOn){ stat($("status"),"Baca foto belum aktif: isi API key Gemini di ⚙️ Baca foto otomatis (di atas). Atau tekan \"Pakai daftar nama\" lalu klik sendiri yang tidak hadir.","err"); $("setPanel").open=true; return; }
+  reading=true; aborted=false; drawThumbs(); $("stopBtn").hidden=false;
+  const merged=new Map(); let waktu="", failed=0;
+  for(let i=0;i<files.length;i++){
+    if(aborted){ files[i].st="dihentikan"; break; }
+    files[i].st="membaca…"; drawThumbs(); stat($("status"),`Membaca halaman ${i+1} dari ${files.length}… (10–40 detik per halaman)`);
+    try{
+      const image=await toJpegBase64(files[i].f);
+      const {result:res}=await api("read",{image,mime:"image/jpeg"});
+      const rows=Array.isArray(res?.rows)?res.rows:[];
+      for(const r of rows){ const no=parseInt(r.no,10); if(!no||!String(r.nama||"").trim()) continue;
+        merged.set(no,{no,nama:String(r.nama).trim(),jabatan:String(r.jabatan||"").trim(),absen:r.dilingkari===true||r.dilingkari==="true",alasan:"",ket:""}); }
+      if(!waktu&&res?.waktu) waktu=String(res.waktu);
+      files[i].st=`${rows.length} baris`;
+    }catch(e){ failed++; files[i].st="gagal"; stat($("status"),"Gagal membaca: "+e.message,"err"); }
+    drawThumbs();
+  }
+  reading=false; $("stopBtn").hidden=true; drawThumbs();
+  if(merged.size){
+    const list=[...merged.values()].sort((a,b)=>a.no-b.no);
+    let last=""; for(const r of list){ if(!r.jabatan) r.jabatan=last; last=r.jabatan; r.cat=catOf(r.jabatan); }
+    const old=riwayat.get(cur.tanggal); if(old){ const m=new Map(old.rows.map(r=>[keyOf(r.nama),r])); for(const r of list){ const o=m.get(keyOf(r.nama)); if(o&&r.absen&&o.absen){ r.alasan=o.alasan||""; r.ket=o.ket||""; } } }
+    cur.rows=list; if(waktu) cur.waktu=waktu; setDirty(true); renderToday();
+    const gaps=[]; for(let n=1;n<=list[list.length-1].no;n++) if(!merged.has(n)) gaps.push(n);
+    stat($("status"),`Selesai: ${list.length} nama terbaca, ${list.filter(r=>r.absen).length} dilingkari. Isi alasannya lalu tekan Simpan.`+(gaps.length?` Nomor tidak terbaca: ${gaps.slice(0,15).join(", ")}${gaps.length>15?"…":""}.`:"")+(failed?` ${failed} halaman gagal.`:""), (gaps.length||failed)?"err":"good");
+  }
+};
+
+/* ---------- RIWAYAT ---------- */
+let mode="month", rankF="all";
+function inPeriod(iso){
+  if(mode==="all") return true;
+  if(mode==="month"){ const m=$("bulan").value; return !m||iso.startsWith(m); }
+  const a=$("dari").value, b=$("sampai").value; return (!a||iso>=a)&&(!b||iso<=b);
+}
+function periodLabel(){
+  if(mode==="all") return "· semua data";
+  if(mode==="month"){ const m=$("bulan").value; if(!m) return ""; try{ return "· "+new Date(m+"-01T00:00:00").toLocaleDateString("id-ID",{month:"long",year:"numeric"}); }catch{ return "· "+m; } }
+  const a=$("dari").value,b=$("sampai").value; return `· ${a?fmtShort(a):"awal"} – ${b?fmtShort(b):"sekarang"}`;
+}
+function renderHist(){
+  $("periodLabel").textContent=periodLabel();
+  const docs=[...riwayat.values()].filter(d=>inPeriod(d.tanggal)).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
+  $("hDays").textContent=docs.length;
+  let reg=0, abs=0; const rc=Object.fromEntries(RKEYS.map(k=>[k,0])); const cat={skill:[0,0],helper:[0,0],staff:[0,0]};
+  const people=new Map();
+  for(const d of docs){ const rows=d.rows||[]; reg+=rows.length;
+    for(const r of rows){ cat[r.cat]=cat[r.cat]||[0,0]; cat[r.cat][0]++;
+      if(!r.absen) continue; abs++; cat[r.cat][1]++; rc[r.alasan||""]++;
+      const k=keyOf(r.nama); if(!people.has(k)) people.set(k,{nama:r.nama,jabatan:r.jabatan,cat:r.cat,list:[]});
+      people.get(k).list.push({t:d.tanggal,a:r.alasan||"",ket:r.ket||""}); } }
+  $("hAbs").textContent=abs; $("hRate").textContent=reg?Math.round((reg-abs)/reg*100)+"%":"–";
+  $("reasonBody").innerHTML=RKEYS.map(k=>`<tr><td><span class="dot" style="background:${rcolor(k)}"></span>${RLABEL[k]}</td><td class="n">${rc[k]}</td></tr>`).join("");
+  $("hCatBody").innerHTML=["skill","helper","staff"].map(k=>`<tr><td><span class="dot k-${k}"></span>${CATS[k]}</td><td class="n">${docs.length?Math.round(cat[k][0]/docs.length):0}</td><td class="n${cat[k][1]?" abs":""}">${cat[k][1]}</td></tr>`).join("");
+  $("legend").innerHTML=RKEYS.map(k=>`<span><i class="sw" style="background:${rcolor(k)}"></i>${RLABEL[k]}</span>`).join("");
+
+  const rk=$("rank"); rk.innerHTML="";
+  const ppl=[...people.values()].filter(p=>rankF==="all"||p.cat===rankF).sort((a,b)=>b.list.length-a.list.length||a.nama.localeCompare(b.nama));
+  if(!ppl.length) rk.innerHTML=`<p class="empty">${docs.length?"Tidak ada yang tidak hadir pada periode ini.":"Belum ada rekap tersimpan pada periode ini."}</p>`;
+  ppl.slice(0,50).forEach((p,i)=>{
+    const det=document.createElement("details");
+    const cnt={}; for(const x of p.list) cnt[x.a]=(cnt[x.a]||0)+1;
+    det.innerHTML=`<summary><span class="pos">${i+1}</span><span class="nm"></span><span class="cnt">${p.list.length}<small>× tdk hadir</small></span><span class="stack">${RKEYS.filter(k=>cnt[k]).map(k=>`<i style="width:${cnt[k]/p.list.length*100}%;background:${rcolor(k)}" title="${RLABEL[k]}: ${cnt[k]}"></i>`).join("")}</span></summary><ul></ul>`;
+    const nm=det.querySelector(".nm"); nm.textContent=p.nama; const sm=document.createElement("small"); sm.textContent=`${p.jabatan} · `+RKEYS.filter(k=>cnt[k]).map(k=>`${RLABEL[k]} ${cnt[k]}`).join(", "); nm.appendChild(sm);
+    const ul=det.querySelector("ul"); p.list.sort((a,b)=>b.t.localeCompare(a.t)).forEach(x=>{ const li=document.createElement("li"); li.innerHTML=`<b></b>`; li.querySelector("b").textContent=fmtShort(x.t); li.append(RLABEL[x.a]+(x.ket?" – "+x.ket:"")); ul.appendChild(li); });
+    rk.appendChild(det);
+  });
+
+  const box=$("days"); box.innerHTML="";
+  if(!docs.length) box.innerHTML=`<p class="empty">Belum ada rekap tersimpan pada periode ini. Simpan rekap dari tab Hari ini.</p>`;
+  for(const d of docs){ const n=(d.rows||[]).length, a=(d.rows||[]).filter(r=>r.absen).length, und=(d.rows||[]).filter(r=>r.absen&&!r.alasan).length;
+    const b=document.createElement("button"); b.className="day";
+    b.innerHTML=`<span class="d">${fmtShort(d.tanggal)}<small>${fmtDay(d.tanggal)}${und?` · ${und} belum diisi`:""}</small></span><span class="bar"><i style="width:${n?a/n*100:0}%"></i></span><span class="v">${n-a}/${n}<br><b>−${a}</b></span>`;
+    b.onclick=()=>{ loadDay(d.tanggal); showTab("today"); window.scrollTo({top:0,behavior:"smooth"}); };
+    box.appendChild(b); }
+}
+$("modeChips").onclick=e=>{const b=e.target.closest("button"); if(!b) return; mode=b.dataset.m; for(const x of $("modeChips").children) x.setAttribute("aria-pressed",x===b); $("monthBox").hidden=mode!=="month"; $("rangeBox").hidden=mode!=="range"; renderHist();};
+$("rankFilter").onclick=e=>{const b=e.target.closest("button"); if(!b) return; rankF=b.dataset.f; for(const x of $("rankFilter").children) x.setAttribute("aria-pressed",x===b); renderHist();};
+for(const id of ["bulan","dari","sampai"]) $(id).onchange=renderHist;
+
+/* backup / impor */
+$("reloadBtn").onclick=()=>loadAll();
+$("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify([...riwayat.values()],null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`backup-absensi-smt-${todayISO()}.json`; a.click();
+};
+$("importIn").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  let list; try{ list=JSON.parse(await f.text()); if(!Array.isArray(list)) list=[list]; }catch{ stat($("dataStatus"),"File backup tidak valid.","err"); return; }
+  list=list.filter(d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d.tanggal)&&Array.isArray(d.rows));
+  let ok=0; for(const d of list){ stat($("dataStatus"),`Mengimpor ${ok+1}/${list.length}…`); try{ await api("save",{data:d}); riwayat.set(d.tanggal,d); ok++; }catch(err){ stat($("dataStatus"),`Gagal di ${d.tanggal}: ${err.message}`,"err"); break; } }
+  
+  stat($("dataStatus"),`${ok} hari diimpor.`,"good"); afterLoad();
+};
+
+function showTab(t){ $("tabToday").setAttribute("aria-selected",t==="today"); $("tabHist").setAttribute("aria-selected",t==="hist"); $("viewToday").hidden=t!=="today"; $("viewHist").hidden=t!=="hist"; if(t==="hist") renderHist(); }
+$("tabToday").onclick=()=>showTab("today"); $("tabHist").onclick=()=>showTab("hist");
+
+/* ---------- start ---------- */
+{ const d=new Date(); $("bulan").value=`${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+renderToday(); renderHist(); connect();
+</script>
+</body>
+</html>

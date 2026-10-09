@@ -300,6 +300,7 @@ let modelCache=null;
 /* cari otomatis model "flash" terbaru yang tersedia untuk key ini */
 async function getModels(key){
   if(modelCache) return modelCache;
+  const saved=ls.get("smt_model_ok"); if(saved){ modelCache=[saved,...GEMINI_FALLBACK.filter(x=>x!==saved)]; return modelCache; }
   let found=[];
   try{
     const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",{headers:{"x-goog-api-key":key}});
@@ -362,14 +363,16 @@ async function api(action, payload={}){
   if(action==="delete"){ const old=readStore(); if(old===null) throw new Error("Riwayat tidak bisa dibaca."); writeStore(old.filter(d=>d.tanggal!==payload.tanggal)); return {}; }
   if(action==="read"){
     const key=ls.get("smt_gemini_key"); if(!key) throw new Error("API key Gemini belum diisi.");
-    const body=JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:payload.mime,data:payload.image}}]}],generationConfig:{responseMimeType:"application/json",temperature:0}});
+    const mkBody=(model)=>{ const gc={responseMimeType:"application/json",temperature:0};
+      if(ls.get("smt_nothink_"+model)!=="off") gc.thinkingConfig = /gemini-[3-9]/.test(model)?{thinkingLevel:"low"}:{thinkingBudget:0};
+      return JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:payload.mime,data:payload.image}}]}],generationConfig:gc}); };
     let lastErr=null;
     const models=await getModels(key); const tried=new Set();
     for(let mi=0; mi<models.length; mi++){
       const model=models[mi]; if(tried.has(model)) continue; tried.add(model);
       for(let attempt=0;attempt<3;attempt++){
         if(aborted) throw new Error("Dihentikan.");
-        let r,j;
+        let r,j; const body=mkBody(model);
         const base=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
         try{
           try{ r=await fetch(base,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body}); }
@@ -381,11 +384,13 @@ async function api(action, payload={}){
           const text=(j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
           const m=text.match(/\{[\s\S]*\}/);
           if(!m){ lastErr=new Error("Hasil bacaan kosong (foto mungkin diblokir/tidak jelas)."); break; }
-          try{ const res={result:JSON.parse(m[0])}; modelCache=[model,...models.filter(x=>x!==model)]; return res; }catch{ lastErr=new Error("Hasil bacaan rusak."); continue; }
+          try{ const res={result:JSON.parse(m[0])}; modelCache=[model,...models.filter(x=>x!==model)]; ls.set("smt_model_ok",model); return res; }catch{ lastErr=new Error("Hasil bacaan rusak."); continue; }
         }
+        if(r.status===400 && /thinking/i.test(msg) && ls.get("smt_nothink_"+model)!=="off"){ ls.set("smt_nothink_"+model,"off"); attempt--; continue; }
         if(r.status===403||/api key not valid|API_KEY_INVALID/i.test(msg)) throw new Error("API key Gemini tidak valid. Buat key baru di aistudio.google.com/apikey lalu simpan ulang.");
         if(r.status===404 || /no longer available|not found/i.test(msg)){
           const sug=(msg.match(/models\/(gemini-[\w.-]+)/g)||[]).map(x=>x.replace("models/","")).filter(x=>!tried.has(x));
+          if(ls.get("smt_model_ok")===model){ try{ localStorage.removeItem("smt_model_ok"); }catch{} modelCache=null; const fresh=await getModels(key); models.splice(mi+1,0,...fresh.filter(x=>!tried.has(x))); }
           models.splice(mi+1,0,...sug); lastErr=new Error("Model "+model+" tidak tersedia."); break; }
         if(r.status===429){ lastErr=new Error("Kuota Gemini gratis habis / terlalu cepat. Tunggu 1 menit lalu coba lagi."); await sleep(15000*(attempt+1)); continue; }
         if(r.status>=500){ lastErr=new Error("Server Gemini sedang sibuk."); await sleep(4000*(attempt+1)); continue; }
@@ -542,10 +547,10 @@ $("galIn").onchange=e=>{addFiles(e.target.files); e.target.value="";};
 function toJpegBase64(file){
   return new Promise((res,rej)=>{
     const img=new Image(); img.onload=()=>{
-      const max=2000, s=Math.min(1,max/Math.max(img.width,img.height));
+      const max=1600, s=Math.min(1,max/Math.max(img.width,img.height));
       const c=document.createElement("canvas"); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
+      URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg",0.8).split(",")[1]);
     }; img.onerror=()=>{ URL.revokeObjectURL(img.src); rej(new Error("Foto tidak bisa dibuka (format HEIC? ubah kamera ke JPG)")); }; img.src=URL.createObjectURL(file);
   });
 }
@@ -554,9 +559,12 @@ $("readBtn").onclick=async()=>{
     if(!geminiOn){ stat($("status"),"Baca foto belum aktif: isi API key Gemini di ⚙️ Baca foto otomatis (di atas). Atau tekan \"Pakai daftar nama\" lalu klik sendiri yang tidak hadir.","err"); $("setPanel").open=true; return; }
   reading=true; aborted=false; drawThumbs(); $("stopBtn").hidden=false;
   const merged=new Map(); let waktu="", failed=0; const errs=[];
-  for(let i=0;i<files.length;i++){
-    if(aborted){ files[i].st="dihentikan"; break; }
-    files[i].st="membaca…"; drawThumbs(); stat($("status"),`Membaca halaman ${i+1} dari ${files.length}… (10–40 detik per halaman)`);
+  const t0=Date.now(); let done=0;
+  const tick=setInterval(()=>{ if(reading) stat($("status"),`Membaca ${files.length} halaman sekaligus… ${done}/${files.length} selesai · ${Math.round((Date.now()-t0)/1000)} detik`); },1000);
+  await Promise.all(files.map(async(_,i)=>{
+    await sleep(i*700);
+    if(aborted){ files[i].st="dihentikan"; return; }
+    files[i].st="membaca…"; drawThumbs();
     try{
       const image=await toJpegBase64(files[i].f);
       const {result:res}=await api("read",{image,mime:"image/jpeg"});
@@ -565,9 +573,10 @@ $("readBtn").onclick=async()=>{
         merged.set(no,{no,nama:String(r.nama).trim(),jabatan:String(r.jabatan||"").trim(),absen:r.dilingkari===true||r.dilingkari==="true",alasan:"",ket:""}); }
       if(!waktu&&res?.waktu) waktu=String(res.waktu);
       files[i].st=`${rows.length} baris`;
-    }catch(e){ failed++; files[i].st="gagal"; errs.push(`Hal ${i+1}: ${e.message}`); stat($("status"),`Hal ${i+1} gagal: ${e.message}`,"err"); }
-    drawThumbs();
-  }
+    }catch(e){ failed++; files[i].st="gagal"; errs.push(`Hal ${i+1}: ${e.message}`); }
+    done++; drawThumbs();
+  }));
+  clearInterval(tick);
   reading=false; $("stopBtn").hidden=true; drawThumbs();
   if(!merged.size && failed){ stat($("status"),"Gagal membaca foto.\n"+[...new Set(errs)].join("\n"),"err"); }
   if(!merged.size && !aborted && !failed){ stat($("status"),"Tidak ada nama yang terbaca. Foto ulang lebih dekat, tegak, dan terang.","err"); }
@@ -577,7 +586,7 @@ $("readBtn").onclick=async()=>{
     const old=riwayat.get(cur.tanggal); if(old){ const m=new Map(old.rows.map(r=>[keyOf(r.nama),r])); for(const r of list){ const o=m.get(keyOf(r.nama)); if(o&&r.absen&&o.absen){ r.alasan=o.alasan||""; r.ket=o.ket||""; } } }
     cur.rows=list; if(waktu) cur.waktu=waktu; setDirty(true); renderToday();
     const gaps=[]; for(let n=1;n<=list[list.length-1].no;n++) if(!merged.has(n)) gaps.push(n);
-    stat($("status"),`Selesai: ${list.length} nama terbaca, ${list.filter(r=>r.absen).length} dilingkari. Isi alasannya lalu tekan Simpan.`+(gaps.length?` Nomor tidak terbaca: ${gaps.slice(0,15).join(", ")}${gaps.length>15?"…":""}.`:"")+(failed?` ${failed} halaman gagal — ${[...new Set(errs)].join(" | ")}`:""), (gaps.length||failed)?"err":"good");
+    stat($("status"),`Selesai dalam ${Math.round((Date.now()-t0)/1000)} detik: ${list.length} nama terbaca, ${list.filter(r=>r.absen).length} dilingkari. Isi alasannya lalu tekan Simpan.`+(gaps.length?` Nomor tidak terbaca: ${gaps.slice(0,15).join(", ")}${gaps.length>15?"…":""}.`:"")+(failed?` ${failed} halaman gagal — ${[...new Set(errs)].join(" | ")}`:""), (gaps.length||failed)?"err":"good");
   }
 };
 

@@ -53,7 +53,7 @@ button:focus-visible,.btn:focus-within,input:focus-visible,select:focus-visible{
 .thumb img{width:100%;height:100%;object-fit:cover}
 .thumb .x{position:absolute;top:3px;right:3px;padding:2px 7px;font-size:13px;border-radius:5px}
 .thumb .st{position:absolute;left:0;right:0;bottom:0;font:500 10px var(--f-mono);padding:3px 4px;background:rgba(0,0,0,.6);color:#fff;text-align:center}
-.status{font-size:14px;color:var(--muted);min-height:1.2em;margin:0}
+.status{white-space:pre-line;font-size:14px;color:var(--muted);min-height:1.2em;margin:0}
 .status.err{color:var(--absent)} .status.good{color:var(--ok)}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
@@ -295,7 +295,26 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
 <script>
 /* Riwayat tersimpan di memori browser (localStorage) HP yang membuka link ini.
    Pindah HP: tab Riwayat → Backup, lalu Impor di HP baru. */
-const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_FALLBACK = ["gemini-3.8-flash","gemini-flash-latest","gemini-2.5-flash"];
+let modelCache=null;
+/* cari otomatis model "flash" terbaru yang tersedia untuk key ini */
+async function getModels(key){
+  if(modelCache) return modelCache;
+  let found=[];
+  try{
+    const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",{headers:{"x-goog-api-key":key}});
+    const j=await r.json();
+    const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0);
+    found=(j.models||[])
+      .filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent"))
+      .map(m=>m.name.replace(/^models\//,""))
+      .filter(n=>/^gemini-.*flash/.test(n) && !/image|tts|audio|live|embed|thinking|exp|8b/.test(n))
+      .sort((a,b)=> ver(b)-ver(a) || (/lite/.test(a)-/lite/.test(b)) || (/preview/.test(a)-/preview/.test(b)) || a.length-b.length);
+  }catch{}
+  modelCache=[...new Set([...found.slice(0,4),...GEMINI_FALLBACK])];
+  return modelCache;
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const DATA_AWAL = {"tanggal":"2026-10-08","waktu":"07.00 – selesai","savedAt":"2026-10-08T01:40:00.000Z","rows":[{"no":1,"nama":"Prasetyo Rahardjo","jabatan":"Site Manager","cat":"staff","absen":false,"alasan":"","ket":""},{"no":2,"nama":"Tobroni","jabatan":"Supervisor","cat":"staff","absen":false,"alasan":"","ket":""},{"no":3,"nama":"Bayu Aji Sentiko","jabatan":"HSE Coordinator","cat":"staff","absen":false,"alasan":"","ket":""},{"no":4,"nama":"Rizal Muzakir","jabatan":"Field Engineer","cat":"staff","absen":false,"alasan":"","ket":""},{"no":5,"nama":"Aditya Rahmatulah","jabatan":"Quality Control","cat":"staff","absen":false,"alasan":"","ket":""},{"no":6,"nama":"Waluyo Tri Utomo","jabatan":"QC Inspektor","cat":"staff","absen":false,"alasan":"","ket":""},{"no":7,"nama":"Akh. Nur Hidayat","jabatan":"Paramedic","cat":"staff","absen":false,"alasan":"","ket":""},{"no":8,"nama":"Chyntya Intan Valenia","jabatan":"Admin QC","cat":"staff","absen":false,"alasan":"","ket":""},{"no":9,"nama":"Reni Wulandari","jabatan":"Admin QC","cat":"staff","absen":false,"alasan":"","ket":""},{"no":10,"nama":"M. Subhan","jabatan":"Driver","cat":"staff","absen":false,"alasan":"","ket":""},{"no":11,"nama":"Moh. Shoinun","jabatan":"Driver","cat":"staff","absen":false,"alasan":"","ket":""},{"no":12,"nama":"Linda Ayu Ramadani","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":13,"nama":"Amalia Nur Alfina","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":14,"nama":"Aliya Puspitasari","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":15,"nama":"Viola Rahmadini","jabatan":"Safetyman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":16,"nama":"Sugiono","jabatan":"Foreman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":17,"nama":"Tarmuji","jabatan":"Foreman","cat":"staff","absen":false,"alasan":"","ket":""},{"no":18,"nama":"Ngationo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":19,"nama":"Lasmo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":20,"nama":"Widodo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":21,"nama":"Akhmad Jamaludin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":22,"nama":"Andry Sunaryo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":23,"nama":"Sunarto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":24,"nama":"M. Wiji Utomo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":25,"nama":"Sa'dun","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":26,"nama":"Mochammad Muzaedin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":27,"nama":"Kacung Agus P.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":28,"nama":"Muhammad Alif","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":29,"nama":"Prayuda Akbar","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":30,"nama":"M. Wahyudi","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":31,"nama":"Sunjoto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":32,"nama":"Jupriono","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":33,"nama":"Ahmad Erwin","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":34,"nama":"Kasnadi","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":35,"nama":"Ali Mustofa","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":36,"nama":"Arif Hidayatullah","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":37,"nama":"Yaskun","jabatan":"Skill Insulation","cat":"skill","absen":true,"alasan":"","ket":""},{"no":38,"nama":"Deny Wibowo","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":39,"nama":"M. Sirojul M.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":40,"nama":"Heri Purwanto","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":41,"nama":"Rahmadani Yusuf","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":42,"nama":"Aldo Langgeng W.","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":43,"nama":"M. Sofyan Dimas Eka","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":44,"nama":"Winarno","jabatan":"Skill Insulation","cat":"skill","absen":false,"alasan":"","ket":""},{"no":45,"nama":"Musta'in","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":46,"nama":"Kevin Putra","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":47,"nama":"Agus Purwanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":48,"nama":"Habib Ardiansyah","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":49,"nama":"Sakhuan","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":50,"nama":"Reggi Andhika Azhi Hamdhani","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":51,"nama":"Syaiful Anwar","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":52,"nama":"Syai'in","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":53,"nama":"Ahmad Zaki Al Amin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":54,"nama":"Herman Felani","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":55,"nama":"Alif Setyo Budi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":56,"nama":"Muhammad Syaifudin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":57,"nama":"Ilal Muslimin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":58,"nama":"Kiki Dwi Prastyo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":59,"nama":"Winaryo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":60,"nama":"Ahmad Bayu","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":61,"nama":"Lamsi","jabatan":"Helper","cat":"helper","absen":true,"alasan":"","ket":""},{"no":62,"nama":"Susanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":63,"nama":"Charis Ilham K.","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":64,"nama":"Ahmad Nur Efendi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":65,"nama":"Arga Setya Nawala","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":66,"nama":"Sugeng Agung Santoso","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":67,"nama":"Muhammad Dodi","jabatan":"Helper","cat":"helper","absen":true,"alasan":"","ket":""},{"no":68,"nama":"Handa Rama Novantio","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":69,"nama":"Muhammad Dani Ardinata","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":70,"nama":"Budi Rahayu","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":71,"nama":"Hendro Sasmito","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":72,"nama":"Juditomo","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":73,"nama":"Muntakip","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":74,"nama":"M. Dhevit","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":75,"nama":"Ahmad Wiranto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":76,"nama":"Jamin","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":77,"nama":"Sarmadi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":78,"nama":"Hendrik Eko","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":79,"nama":"Gilang Febriyansah","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":80,"nama":"Darmawan Eko","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":81,"nama":"Rizki Kristiyanto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":82,"nama":"Gunanto Abdul Hadi","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""},{"no":83,"nama":"Narto","jabatan":"Helper","cat":"helper","absen":false,"alasan":"","ket":""}]};
 
 const CATS = {skill:"Skill",helper:"Helper",staff:"Staff / Pengawas"};
@@ -338,17 +357,42 @@ Abaikan baris kosong tanpa nama. Isi "waktu" dengan isi kolom Waktu jika ada di 
 Balas HANYA JSON: {"waktu":"","rows":[{"no":29,"nama":"Prayuda Akbar","jabatan":"Skill Insulation","dilingkari":true}]}`;
 async function api(action, payload={}){
   if(action==="list"){ const l=readStore(); if(l===null) throw new Error("Memori browser tidak bisa dibaca (mode penyamaran?)."); return {items:l}; }
-  if(action==="save"){ const l=(readStore()||[]).filter(d=>d.tanggal!==payload.data.tanggal); l.push(payload.data);
+  if(action==="save"){ const old=readStore(); if(old===null) throw new Error("Riwayat lama tidak bisa dibaca, simpan dibatalkan supaya data tidak tertimpa. Buat Backup dulu."); const l=old.filter(d=>d.tanggal!==payload.data.tanggal); l.push(payload.data);
     try{ writeStore(l); }catch{ throw new Error("Memori browser penuh atau diblokir. Buat Backup lalu hapus hari-hari lama."); } return {}; }
-  if(action==="delete"){ writeStore((readStore()||[]).filter(d=>d.tanggal!==payload.tanggal)); return {}; }
+  if(action==="delete"){ const old=readStore(); if(old===null) throw new Error("Riwayat tidak bisa dibaca."); writeStore(old.filter(d=>d.tanggal!==payload.tanggal)); return {}; }
   if(action==="read"){
     const key=ls.get("smt_gemini_key"); if(!key) throw new Error("API key Gemini belum diisi.");
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:payload.mime,data:payload.image}}]}],generationConfig:{responseMimeType:"application/json",temperature:0}})});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok) throw new Error(r.status===400||r.status===403?"API key Gemini tidak valid.":r.status===429?"Kuota Gemini habis, coba lagi nanti.":"Gemini error "+r.status+(j.error?.message?": "+j.error.message:""));
-    const text=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join(""); const m=text.match(/\{[\s\S]*\}/);
-    if(!m) throw new Error("Hasil bacaan bukan JSON. Coba lagi."); return {result:JSON.parse(m[0])};
+    const body=JSON.stringify({contents:[{parts:[{text:PROMPT},{inline_data:{mime_type:payload.mime,data:payload.image}}]}],generationConfig:{responseMimeType:"application/json",temperature:0}});
+    let lastErr=null;
+    const models=await getModels(key); const tried=new Set();
+    for(let mi=0; mi<models.length; mi++){
+      const model=models[mi]; if(tried.has(model)) continue; tried.add(model);
+      for(let attempt=0;attempt<3;attempt++){
+        if(aborted) throw new Error("Dihentikan.");
+        let r,j;
+        const base=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+        try{
+          try{ r=await fetch(base,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body}); }
+          catch{ r=await fetch(base+"?key="+encodeURIComponent(key),{method:"POST",headers:{"Content-Type":"application/json"},body}); }
+        }catch(e){ lastErr=new Error("Tidak ada koneksi internet / jaringan memblokir Gemini."); await sleep(2000); continue; }
+        j=await r.json().catch(()=>({}));
+        const msg=j.error?.message||"";
+        if(r.ok){
+          const text=(j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+          const m=text.match(/\{[\s\S]*\}/);
+          if(!m){ lastErr=new Error("Hasil bacaan kosong (foto mungkin diblokir/tidak jelas)."); break; }
+          try{ const res={result:JSON.parse(m[0])}; modelCache=[model,...models.filter(x=>x!==model)]; return res; }catch{ lastErr=new Error("Hasil bacaan rusak."); continue; }
+        }
+        if(r.status===403||/api key not valid|API_KEY_INVALID/i.test(msg)) throw new Error("API key Gemini tidak valid. Buat key baru di aistudio.google.com/apikey lalu simpan ulang.");
+        if(r.status===404 || /no longer available|not found/i.test(msg)){
+          const sug=(msg.match(/models\/(gemini-[\w.-]+)/g)||[]).map(x=>x.replace("models/","")).filter(x=>!tried.has(x));
+          models.splice(mi+1,0,...sug); lastErr=new Error("Model "+model+" tidak tersedia."); break; }
+        if(r.status===429){ lastErr=new Error("Kuota Gemini gratis habis / terlalu cepat. Tunggu 1 menit lalu coba lagi."); await sleep(15000*(attempt+1)); continue; }
+        if(r.status>=500){ lastErr=new Error("Server Gemini sedang sibuk."); await sleep(4000*(attempt+1)); continue; }
+        throw new Error("Gemini error "+r.status+(msg?": "+msg:""));
+      }
+    }
+    throw lastErr||new Error("Gagal membaca.");
   }
 }
 function setConn(){ geminiOn=!!ls.get("smt_gemini_key"); const p=$("connPill"); p.className="pill "+(geminiOn?"saved":"new"); p.textContent=geminiOn?"Aktif":"Belum aktif"; }
@@ -459,6 +503,7 @@ function loadDay(iso){
 }
 $("tgl").onchange=e=>{
   const iso=e.target.value; if(!iso) return;
+  if(dirty && cur.rows.length && riwayat.has(iso) && !confirm("Ada perubahan yang belum disimpan. Pindah tanggal dan buang perubahan?")){ e.target.value=cur.tanggal; return; }
   if(cur.rows.length && dirty && !riwayat.has(iso)){ cur.tanggal=iso; setDirty(true); renderToday(); return; }
   if(riwayat.has(iso)) loadDay(iso); else { cur={tanggal:iso,waktu:cur.waktu,rows:[]}; setDirty(false); renderToday(); }
 };
@@ -500,15 +545,15 @@ function toJpegBase64(file){
       const max=2000, s=Math.min(1,max/Math.max(img.width,img.height));
       const c=document.createElement("canvas"); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
-    }; img.onerror=()=>rej(new Error("Foto tidak bisa dibuka")); img.src=URL.createObjectURL(file);
+      URL.revokeObjectURL(img.src); res(c.toDataURL("image/jpeg",0.85).split(",")[1]);
+    }; img.onerror=()=>{ URL.revokeObjectURL(img.src); rej(new Error("Foto tidak bisa dibuka (format HEIC? ubah kamera ke JPG)")); }; img.src=URL.createObjectURL(file);
   });
 }
 $("stopBtn").onclick=()=>{ aborted=true; };
 $("readBtn").onclick=async()=>{
     if(!geminiOn){ stat($("status"),"Baca foto belum aktif: isi API key Gemini di ⚙️ Baca foto otomatis (di atas). Atau tekan \"Pakai daftar nama\" lalu klik sendiri yang tidak hadir.","err"); $("setPanel").open=true; return; }
   reading=true; aborted=false; drawThumbs(); $("stopBtn").hidden=false;
-  const merged=new Map(); let waktu="", failed=0;
+  const merged=new Map(); let waktu="", failed=0; const errs=[];
   for(let i=0;i<files.length;i++){
     if(aborted){ files[i].st="dihentikan"; break; }
     files[i].st="membaca…"; drawThumbs(); stat($("status"),`Membaca halaman ${i+1} dari ${files.length}… (10–40 detik per halaman)`);
@@ -520,17 +565,19 @@ $("readBtn").onclick=async()=>{
         merged.set(no,{no,nama:String(r.nama).trim(),jabatan:String(r.jabatan||"").trim(),absen:r.dilingkari===true||r.dilingkari==="true",alasan:"",ket:""}); }
       if(!waktu&&res?.waktu) waktu=String(res.waktu);
       files[i].st=`${rows.length} baris`;
-    }catch(e){ failed++; files[i].st="gagal"; stat($("status"),"Gagal membaca: "+e.message,"err"); }
+    }catch(e){ failed++; files[i].st="gagal"; errs.push(`Hal ${i+1}: ${e.message}`); stat($("status"),`Hal ${i+1} gagal: ${e.message}`,"err"); }
     drawThumbs();
   }
   reading=false; $("stopBtn").hidden=true; drawThumbs();
+  if(!merged.size && failed){ stat($("status"),"Gagal membaca foto.\n"+[...new Set(errs)].join("\n"),"err"); }
+  if(!merged.size && !aborted && !failed){ stat($("status"),"Tidak ada nama yang terbaca. Foto ulang lebih dekat, tegak, dan terang.","err"); }
   if(merged.size){
     const list=[...merged.values()].sort((a,b)=>a.no-b.no);
     let last=""; for(const r of list){ if(!r.jabatan) r.jabatan=last; last=r.jabatan; r.cat=catOf(r.jabatan); }
     const old=riwayat.get(cur.tanggal); if(old){ const m=new Map(old.rows.map(r=>[keyOf(r.nama),r])); for(const r of list){ const o=m.get(keyOf(r.nama)); if(o&&r.absen&&o.absen){ r.alasan=o.alasan||""; r.ket=o.ket||""; } } }
     cur.rows=list; if(waktu) cur.waktu=waktu; setDirty(true); renderToday();
     const gaps=[]; for(let n=1;n<=list[list.length-1].no;n++) if(!merged.has(n)) gaps.push(n);
-    stat($("status"),`Selesai: ${list.length} nama terbaca, ${list.filter(r=>r.absen).length} dilingkari. Isi alasannya lalu tekan Simpan.`+(gaps.length?` Nomor tidak terbaca: ${gaps.slice(0,15).join(", ")}${gaps.length>15?"…":""}.`:"")+(failed?` ${failed} halaman gagal.`:""), (gaps.length||failed)?"err":"good");
+    stat($("status"),`Selesai: ${list.length} nama terbaca, ${list.filter(r=>r.absen).length} dilingkari. Isi alasannya lalu tekan Simpan.`+(gaps.length?` Nomor tidak terbaca: ${gaps.slice(0,15).join(", ")}${gaps.length>15?"…":""}.`:"")+(failed?` ${failed} halaman gagal — ${[...new Set(errs)].join(" | ")}`:""), (gaps.length||failed)?"err":"good");
   }
 };
 
@@ -604,6 +651,7 @@ $("importIn").onchange=async e=>{
 function showTab(t){ $("tabToday").setAttribute("aria-selected",t==="today"); $("tabHist").setAttribute("aria-selected",t==="hist"); $("viewToday").hidden=t!=="today"; $("viewHist").hidden=t!=="hist"; if(t==="hist") renderHist(); }
 $("tabToday").onclick=()=>showTab("today"); $("tabHist").onclick=()=>showTab("hist");
 
+window.addEventListener("beforeunload",e=>{ if(dirty&&cur.rows.length){ e.preventDefault(); e.returnValue=""; } });
 /* ---------- start ---------- */
 { const d=new Date(); $("bulan").value=`${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
 renderToday(); renderHist(); connect();

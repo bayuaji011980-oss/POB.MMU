@@ -652,12 +652,18 @@ function knownNames(excludeDate){ const m=new Map();
       x.days.add(t); if(t>=x.lastT){ x.lastT=t; x.nama=r.nama; x.jabatan=r.jabatan; } } }
   for(const x of m.values()){ const ds=[...x.days].sort(); x.first=ds[0]; x.last=ds[ds.length-1]; }
   return m; }
+/* pola salah baca: satu nama berhenti muncul tepat saat nama mirip lain mulai muncul (mis. Musyadim → Mustaqim) */
+function gantian(a,b,dates){ if(sim(a.nama,b.nama)<0.7) return false;
+  const [x,y]= a.first<=b.first ? [a,b] : [b,a];
+  if(x.last>=y.first) return false;
+  const i=dates.indexOf(x.last); return i>=0 && dates[i+1]===y.first; }
 function cekMirip(){
   if(!cur.rows.length) return [];
   const known=knownNames(cur.tanggal); if(!known.size) return [];
   const curKeys=new Set(cur.rows.map(r=>keyOf(r.nama))), bed=bedaSet(), out=[];
   for(const r of cur.rows){ const k=keyOf(r.nama); if(!k||known.has(k)) continue;
-    const c=[...known.values()].filter(x=>!curKeys.has(x.key)&&!bed.has(pairKey(r.nama,x.nama))&&mirip(r.nama,x.nama)).sort((a,b)=>sim(r.nama,b.nama)-sim(r.nama,a.nama)).slice(0,3);
+    const prevT=[...riwayat.keys()].filter(t=>t<cur.tanggal).sort().pop();
+    const c=[...known.values()].filter(x=>!curKeys.has(x.key)&&!bed.has(pairKey(r.nama,x.nama))&&(mirip(r.nama,x.nama)||(x.last===prevT&&sim(r.nama,x.nama)>=0.7))).sort((a,b)=>sim(r.nama,b.nama)-sim(r.nama,a.nama)).slice(0,3);
     if(c.length) out.push({r,c}); }
   return out; }
 function renderMirip(){
@@ -675,9 +681,9 @@ function renderMirip(){
     box.appendChild(d); }
 }
 /* data lama: pasangan nama mirip yang tidak pernah muncul di hari yang sama */
-function dobelPairs(){ const arr=[...knownNames(null).values()], bed=bedaSet(), out=[];
+function dobelPairs(){ const arr=[...knownNames(null).values()], bed=bedaSet(), out=[], dates=[...riwayat.keys()].sort();
   for(let i=0;i<arr.length;i++) for(let j=i+1;j<arr.length;j++){ const a=arr[i], b=arr[j];
-    if(bed.has(pairKey(a.nama,b.nama))||!mirip(a.nama,b.nama)) continue;
+    if(bed.has(pairKey(a.nama,b.nama))||!(mirip(a.nama,b.nama)||gantian(a,b,dates))) continue;
     if([...a.days].some(t=>b.days.has(t))) continue;
     out.push(a.days.size>=b.days.size?[a,b]:[b,a]); }
   return out; }
@@ -694,15 +700,18 @@ function renderDobel(){
     const nb=document.createElement("button"); nb.textContent="✘ Bukan orang yang sama"; nb.onclick=()=>{ addBeda(a.nama,b.nama); stat($("dobelStatus"),`"${a.nama}" dan "${b.nama}" dicatat sebagai orang berbeda.`,"good"); renderDobel(); }; o.appendChild(nb);
     box.appendChild(d); }
 }
-function gabungNama(keep,drop){
-  if(dirty&&cur.rows.length){ stat($("dobelStatus"),"Ada perubahan di tab Hari ini yang belum disimpan. Simpan dulu, baru gabungkan.","err"); return; }
-  if(!confirm(`Gabungkan "${drop.nama}" (${drop.days.size} hari) menjadi "${keep.nama}"?\nSemua hari yang memakai "${drop.nama}" akan diganti jadi "${keep.nama}".`)) return;
-  const l=readStore(); if(l===null){ stat($("dobelStatus"),"Riwayat tidak bisa dibaca, dibatalkan.","err"); return; }
+function gabungNama(keep,drop,statusId){ const SID=statusId||"dobelStatus";
+  if(dirty&&cur.rows.length){ stat($(SID),"Ada perubahan di tab Hari ini yang belum disimpan. Simpan dulu, baru gabungkan.","err"); return; }
+  const both=[...drop.days].filter(t=>keep.days.has(t)).length;
+  if(!confirm(`Gabungkan "${drop.nama}" (${drop.days.size} hari) menjadi "${keep.nama}"?\nSemua hari yang memakai "${drop.nama}" akan diganti jadi "${keep.nama}".`+(both?`\n\n⚠ Keduanya sama-sama ada di ${both} hari yang sama — kemungkinan dua orang berbeda. Di hari itu hanya disisakan satu baris (dihitung hadir kalau salah satunya hadir).`:""))) return;
+  const l=readStore(); if(l===null){ stat($(SID),"Riwayat tidak bisa dibaca, dibatalkan.","err"); return; }
   if(!backupDone){ $("exportBtn").click(); backupDone=true; }
-  let c=0; for(const d of l) for(const r of d.rows||[]) if(keyOf(r.nama)===drop.key){ r.nama=keep.nama; c++; }
-  try{ writeStore(l); }catch{ stat($("dobelStatus"),"Gagal menyimpan, tidak ada yang diubah.","err"); return; }
+  let c=0; for(const d of l){ for(const r of d.rows||[]) if(keyOf(r.nama)===drop.key){ r.nama=keep.nama; c++; }
+    const seen=new Map(); d.rows=(d.rows||[]).filter(r=>{ const k=keyOf(r.nama); if(k!==keep.key) return true; const f=seen.get(k); if(!f){ seen.set(k,r); return true; }
+      if(f.absen&&!r.absen){ f.absen=false; f.alasan=""; f.ket=""; } return false; }); }
+  try{ writeStore(l); }catch{ stat($(SID),"Gagal menyimpan, tidak ada yang diubah.","err"); return; }
   const a=arsipSet(); if(a.delete(drop.key)) setArsip(a);
-  loadAll(); stat($("dobelStatus"),`"${drop.nama}" digabung ke "${keep.nama}" (${c} baris). Backup sebelum diubah sudah diunduh.`,"good");
+  loadAll(); stat($(SID),`"${drop.nama}" digabung ke "${keep.nama}" (${c} baris). Backup sebelum diubah sudah diunduh.`,"good");
 }
 
 /* bandingkan daftar nama hari ini dengan hari tersimpan sebelumnya */
@@ -1280,7 +1289,22 @@ function kelolaRow(x,hidden,days){
   const b1=document.createElement("button"); b1.textContent=hidden?"👁️ Tampilkan lagi":"🙈 Sembunyikan";
   b1.onclick=()=>{ const a=arsipSet(); hidden?a.delete(x.k):a.add(x.k); setArsip(a); stat($("kelolaStatus"),hidden?`${x.nama} ditampilkan lagi.`:`${x.nama} disembunyikan.`,"good"); renderHist(); };
   const b2=document.createElement("button"); b2.className="danger"; b2.textContent="🗑️ Hapus permanen"; b2.onclick=()=>hapusPermanen(x);
-  bt.append(b1,b2); return d;
+  const b3=document.createElement("button"); b3.textContent="🔗 Gabungkan dengan nama lain"; b3.onclick=()=>pilihGabung(d,x);
+  bt.append(b1,b3,b2); return d;
+}
+/* gabung manual: pilih nama lain yang sebenarnya orang yang sama */
+function pilihGabung(row,x){
+  const old=row.querySelector(".gb"); if(old){ old.remove(); return; }
+  const K=knownNames(null), me=K.get(x.k); if(!me) return;
+  const others=[...K.values()].filter(o=>o.key!==me.key).sort((a,b)=>sim(me.nama,b.nama)-sim(me.nama,a.nama));
+  const box=document.createElement("div"); box.className="gb"; box.style.cssText="display:flex;flex-direction:column;gap:6px";
+  box.innerHTML=`<label class="f">Orang yang sama dengan…<select></select></label><div class="btns"></div>`;
+  const sel=box.querySelector("select");
+  sel.innerHTML=others.map(o=>`<option value="${esc(o.key)}">${esc(o.nama)} — ${esc(o.jabatan)}, ${o.days.size} hari (${esc(fmtShort(o.first))}–${esc(fmtShort(o.last))})</option>`).join("");
+  const bb=box.querySelector(".btns");
+  const draw=()=>{ const o=K.get(sel.value); bb.innerHTML=""; if(!o) return;
+    for(const [keep,drop] of [[me,o],[o,me]]){ const b=document.createElement("button"); b.className="primary"; b.textContent=`Gabungkan, pakai nama "${keep.nama}"`; b.onclick=()=>gabungNama(keep,drop,"kelolaStatus"); bb.appendChild(b); } };
+  sel.onchange=draw; draw(); row.appendChild(box);
 }
 function hapusPermanen(x){
   if(dirty&&cur.rows.length){ stat($("kelolaStatus"),"Ada perubahan di tab Hari ini yang belum disimpan. Simpan dulu, baru hapus.","err"); return; }

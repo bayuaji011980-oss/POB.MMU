@@ -13,7 +13,7 @@ body{margin:0}
 :root{
   --bg:#eef1f3; --surface:#ffffff; --fg:#14212b; --muted:#5b6a75; --line:#d5dce1;
   --accent:#0b5f8a; --accent-ink:#ffffff; --absent:#c2410c; --absent-bg:#fdeee6; --ok:#15803d; --ok-bg:#e6f4ea; --warn:#a16207;
-  --skill:#7c3aed; --helper:#0e7490; --staff:#64748b;
+  --skill:#7c3aed; --helper:#0e7490; --gudang:#b45309; --staff:#64748b;
   --r-sakit_surat:#2563eb; --r-sakit:#9333ea; --r-izin:#0d9488; --r-cuti:#65a30d; --r-alpa:#dc2626; --r-none:#94a3b8;
   --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
   --f-body:"Barlow",system-ui,sans-serif;
@@ -22,12 +22,12 @@ body{margin:0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f171d; --surface:#17222a; --fg:#e6edf1; --muted:#93a3ae; --line:#2a3842;
   --accent:#4fb3e3; --accent-ink:#06202e; --absent:#fb8a4f; --absent-bg:#3a1f12; --ok:#4ade80; --ok-bg:#12301d; --warn:#facc15;
-  --skill:#b69cff; --helper:#5fd4e6; --staff:#a7b4c2;
+  --skill:#b69cff; --helper:#5fd4e6; --gudang:#f2a65a; --staff:#a7b4c2;
   --r-sakit_surat:#60a5fa; --r-sakit:#c084fc; --r-izin:#2dd4bf; --r-cuti:#a3e635; --r-alpa:#f87171; --r-none:#64748b; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f171d; --surface:#17222a; --fg:#e6edf1; --muted:#93a3ae; --line:#2a3842;
   --accent:#4fb3e3; --accent-ink:#06202e; --absent:#fb8a4f; --absent-bg:#3a1f12; --ok:#4ade80; --ok-bg:#12301d; --warn:#facc15;
-  --skill:#b69cff; --helper:#5fd4e6; --staff:#a7b4c2;
+  --skill:#b69cff; --helper:#5fd4e6; --gudang:#f2a65a; --staff:#a7b4c2;
   --r-sakit_surat:#60a5fa; --r-sakit:#c084fc; --r-izin:#2dd4bf; --r-cuti:#a3e635; --r-alpa:#f87171; --r-none:#64748b; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
@@ -74,7 +74,7 @@ td.n,th.n{text-align:right} td.n{font-family:var(--f-mono);font-size:14px}
 td.n.abs{color:var(--absent)}
 tr.sum td{font-weight:600;border-bottom:none}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;flex:none}
-.k-skill{background:var(--skill)} .k-helper{background:var(--helper)} .k-staff{background:var(--staff)}
+.k-skill{background:var(--skill)} .k-helper{background:var(--helper)} .k-gudang{background:var(--gudang)} .k-staff{background:var(--staff)}
 .circ{flex:none;width:32px;height:32px;border:2px solid var(--absent);border-radius:50%;display:grid;place-items:center;font:500 12px var(--f-mono);color:var(--absent)}
 .abs-card{border-radius:8px;background:var(--absent-bg);padding:10px;display:flex;flex-direction:column;gap:8px}
 .abs-head{display:flex;align-items:center;gap:10px}
@@ -126,6 +126,48 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
 .rank li{list-style:none;color:var(--muted)} .rank li b{color:var(--fg);font-weight:500;font-family:var(--f-mono);font-size:12px;margin-right:6px}
 .loading{color:var(--muted);font-size:14px}
 @media (max-width:440px){.tot b{font-size:28px}.meta{grid-template-columns:1fr}.day{grid-template-columns:78px 1fr 58px}}
+/* grafik */
+.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chart-scroll svg{display:block;max-width:none}
+.chart-scroll svg text{font-family:var(--f-mono);fill:var(--muted)}
+.ctitle{font:600 14px var(--f-body);margin:4px 0 0}
+.cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:4px}
+.cal div{border-radius:6px;padding:5px 2px;text-align:center;font:600 12px var(--f-mono);line-height:1.15;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.cal div small{display:block;font:500 10px var(--f-body)}
+.cal div.none{background:transparent;border:1px dashed var(--line);color:var(--muted);text-shadow:none}
+.plist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.plist li b{font:500 12px var(--f-mono);margin-right:6px}
+.dates{font:500 12px var(--f-mono);color:var(--muted);line-height:1.7;margin:0}
+.hm{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:8px}
+.hm table{border-collapse:separate;border-spacing:2px;width:auto}
+.hm th,.hm td{padding:0;border:none;white-space:nowrap}
+.hm td.c{width:15px;min-width:15px;height:20px;border-radius:3px}
+.hm td.c.none{background:var(--bg)}
+.hm .nmc{position:sticky;left:0;z-index:2;background:var(--surface);padding:0 8px 0 4px;font:500 12px var(--f-body);text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.hm thead th{position:sticky;top:0;z-index:1;background:var(--surface)}
+.hm thead th.nmc{z-index:3}
+.hm th.dt{font:500 9px var(--f-mono);color:var(--muted);height:58px;writing-mode:vertical-rl;transform:rotate(180deg);text-transform:none;letter-spacing:0}
+.hm td.sumc{font:500 11px var(--f-mono);color:var(--absent);padding-left:6px;text-align:right}
+.hm tr:hover .nmc{color:var(--accent)}
+/* pekerja baru / keluar */
+.chg{border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.chg.new{background:var(--ok-bg)} .chg.out{background:var(--bg);border:1px dashed var(--muted)}
+.chg h3{margin:0;font:600 14px var(--f-body)}
+.chg ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.chg li small{display:block;color:var(--muted);font-size:12px}
+.chg .warn{color:var(--warn);font-size:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px}
+.chg .warn button{padding:4px 9px;font-size:12px}
+.bdg{font:600 9px var(--f-mono);padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:1px;letter-spacing:.04em}
+.bdg.n{background:var(--ok);color:var(--surface)} .bdg.o{background:var(--muted);color:var(--surface)}
+.cal div.out,.hm td.c.out{background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 7px);color:var(--muted);text-shadow:none}
+.moves{display:flex;flex-direction:column;gap:10px}
+.kp{display:flex;flex-direction:column;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.kp .nm{font-weight:600;overflow-wrap:anywhere} .kp small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.kp .btns button{padding:6px 10px;font-size:13px}
+.kh{font:600 13px var(--f-body);margin:6px 0 0;color:var(--muted)}
+.moves .md{font:600 13px var(--f-mono);color:var(--muted);margin:0 0 4px}
+.moves ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.moves li small{color:var(--muted);font-size:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -197,6 +239,11 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
         </table></div>
       </section>
 
+      <section class="panel" id="chgPanel" hidden>
+        <h2>Perubahan daftar nama</h2>
+        <div id="chgBox" style="display:flex;flex-direction:column;gap:8px"></div>
+      </section>
+
       <section class="panel">
         <h2>3 · Yang tidak hadir &amp; alasannya</h2>
         <p class="hint">Ketuk alasan untuk tiap orang. Keterangan boleh dikosongkan.</p>
@@ -220,6 +267,7 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
           <button data-f="abs" aria-pressed="false">Tidak hadir</button>
           <button data-f="skill" aria-pressed="false">Skill</button>
           <button data-f="helper" aria-pressed="false">Helper</button>
+          <button data-f="gudang" aria-pressed="false">Gudang</button>
           <button data-f="staff" aria-pressed="false">Staff</button>
         </div>
         <div class="rows" id="rows"></div>
@@ -234,11 +282,28 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
       <h2>Data</h2>
       <div class="btns">
         <button id="reloadBtn">🔄 Muat ulang</button>
+        <button class="primary" id="xlsBtn">📊 Download Excel</button>
         <button id="exportBtn">⬇️ Backup (JSON)</button>
         <label class="btn">⬆️ Impor backup<input id="importIn" type="file" accept="application/json,.json"></label>
       </div>
       <p class="status" id="dataStatus" role="status"></p>
+      <p class="hint">Excel mengikuti periode yang dipilih di bawah (per bulan / dari–sampai / semua). Data lama tetap tersimpan di HP ini — fitur baru hanya membaca data yang sudah ada.</p>
     </section>
+
+    <details class="panel" id="kelolaPanel">
+      <summary style="cursor:pointer;font:600 15px var(--f-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap">🗂️ Kelola orang (resign lama) <span class="pill new" id="kelolaCount"></span></summary>
+      <p class="hint"><b>Sembunyikan</b> = nama tidak muncul lagi di Per orang, Peta, Sering tidak hadir, dan Excel per orang. Rekap harian lama tetap sama. Bisa ditampilkan lagi kapan saja.<br><b>Hapus permanen</b> = nama dihapus dari semua hari tersimpan, sehingga jumlah terdaftar di hari-hari lama ikut berkurang. Tidak bisa dibatalkan; file backup otomatis diunduh dulu.</p>
+      <label class="f" for="kelolaSearch">Cari nama (kosongkan untuk melihat yang sudah resign / pindah)<input id="kelolaSearch" type="text" placeholder="ketik nama…"></label>
+      <div id="kelolaList" style="display:flex;flex-direction:column;gap:6px"></div>
+      <p class="status" id="kelolaStatus" role="status"></p>
+    </details>
+
+    <details class="panel" id="gudangPanel">
+      <summary style="cursor:pointer;font:600 15px var(--f-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap">👷 Daftar Tim Gudang <span class="pill new" id="gudangCount"></span></summary>
+      <p class="hint">Nama di sini selalu dihitung kategori Gudang di semua hari, termasuk data lama, walaupun di foto jabatannya terbaca "Helper" saja. Ketik nama sama persis seperti di daftar hadir.</p>
+      <div class="chips" id="gudangChips"></div>
+      <div class="btns"><input type="text" id="gudangIn" placeholder="Tambah nama…" style="flex:1;min-width:160px"><button id="gudangAdd">Tambah</button></div>
+    </details>
 
     <section class="panel">
       <h2>Periode</h2>
@@ -272,12 +337,52 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
     </section>
 
     <section class="panel">
+      <h2>Grafik kehadiran <span class="dayname" id="chartLabel"></span></h2>
+      <p class="ctitle">Hadir vs tidak hadir per hari</p>
+      <div class="legend"><span><i class="sw" style="background:var(--ok)"></i>Hadir</span><span><i class="sw" style="background:var(--absent)"></i>Tidak hadir</span></div>
+      <div class="chart-scroll" id="chartDaily"></div>
+      <p class="ctitle">Tidak hadir per kategori per hari</p>
+      <div class="legend" id="catLegend"></div>
+      <div class="chart-scroll" id="chartCat"></div>
+      <p class="hint">Ketuk/tahan satu batang untuk lihat angkanya. Kalau harinya banyak, geser grafik ke samping.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Pekerja baru &amp; keluar <span class="dayname" id="movesLabel"></span></h2>
+      <p class="hint">Nama yang baru muncul di daftar absen = pekerja baru mulai tanggal itu. Nama yang tidak ada lagi di daftar = resign / pindah mulai tanggal itu. (Yang nomornya dilingkari tetap dihitung tidak hadir, bukan keluar.)</p>
+      <div class="moves" id="moves"></div>
+    </section>
+
+    <section class="panel" id="personPanel">
+      <h2>Per orang</h2>
+      <p class="hint">Pilih nama untuk melihat hari apa saja masuk dan kapan tidak masuk, dari data awal sampai akhir periode.</p>
+      <label class="f" for="personSel">Nama<select id="personSel"></select></label>
+      <div id="personBox"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Peta kehadiran semua orang</h2>
+      <div class="legend" id="hmLegend"></div>
+      <div class="chips" id="hmFilter">
+        <button data-f="all" aria-pressed="true">Semua</button>
+        <button data-f="skill" aria-pressed="false">Skill</button>
+        <button data-f="helper" aria-pressed="false">Helper</button>
+        <button data-f="gudang" aria-pressed="false">Gudang</button>
+        <button data-f="staff" aria-pressed="false">Staff</button>
+      </div>
+      <label class="f" for="hmSearch">Cari nama<input id="hmSearch" type="text" placeholder="ketik nama…"></label>
+      <div class="hm" id="hm"></div>
+      <p class="hint">Satu baris = satu orang, satu kotak = satu hari SMT. Angka merah di kanan = jumlah tidak hadir. Ketuk nama untuk membuka detailnya.</p>
+    </section>
+
+    <section class="panel">
       <h2>Sering tidak hadir</h2>
       <div class="legend" id="legend"></div>
       <div class="chips" id="rankFilter">
         <button data-f="all" aria-pressed="true">Semua</button>
         <button data-f="skill" aria-pressed="false">Skill</button>
         <button data-f="helper" aria-pressed="false">Helper</button>
+        <button data-f="gudang" aria-pressed="false">Gudang</button>
         <button data-f="staff" aria-pressed="false">Staff</button>
       </div>
       <div class="rank" id="rank"></div>
@@ -318,7 +423,11 @@ async function getModels(key){
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const DATA_AWAL_LIST = [{"tanggal": "2026-10-01", "waktu": "07.00 – selesai", "savedAt": "2026-10-01T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Suyitno", "jabatan": "Logistic", "cat": "staff", "absen": true, "alasan": "", "ket": ""}, {"no": 8, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": true, "alasan": "", "ket": ""}, {"no": 10, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 29, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 30, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 31, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 35, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 36, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 41, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 44, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 52, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 55, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 56, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 61, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 63, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-02", "waktu": "07.00 – selesai", "savedAt": "2026-10-02T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 39, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 41, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 44, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 49, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 55, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 61, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-03", "waktu": "07.00 – selesai", "savedAt": "2026-10-03T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": true, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 41, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 44, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 55, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 61, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-05", "waktu": "07.00 – selesai", "savedAt": "2026-10-05T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 41, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 44, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 47, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 51, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 55, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 61, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-06", "waktu": "07.00 – selesai", "savedAt": "2026-10-06T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 40, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 41, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 44, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 55, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 61, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-07", "waktu": "07.00 – selesai", "savedAt": "2026-10-07T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 38, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 41, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 44, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 45, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 55, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 61, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 62, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 63, "nama": "M. Sirojul M.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 64, "nama": "Budi Rahayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 65, "nama": "Hendro Sasmito", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 66, "nama": "Juditomo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 67, "nama": "Deny Wibowo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 68, "nama": "Muntakip", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 69, "nama": "M. Dhevit", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 70, "nama": "Ahmad Wiranto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 71, "nama": "Jamin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 72, "nama": "Heri Purwanto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 73, "nama": "Sarmadi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 74, "nama": "Rahmadani Yusuf", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 75, "nama": "Aldo Langgeng W.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 76, "nama": "M. Sofyan Dimas Eka", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 77, "nama": "Winarno", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 78, "nama": "Hendrik Eko", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 79, "nama": "Gilang Febriyansah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 80, "nama": "Darmawan Eko", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 81, "nama": "Gunanto Abdul Hadi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 82, "nama": "Narto", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 83, "nama": "Rizki Kristiyanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}, {"tanggal": "2026-10-08", "waktu": "07.00 – selesai", "savedAt": "2026-10-08T01:40:00.000Z", "rows": [{"no": 1, "nama": "Prasetyo Rahardjo", "jabatan": "Site Manager", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 2, "nama": "Tobroni", "jabatan": "Supervisor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 3, "nama": "Bayu Aji Sentiko", "jabatan": "HSE Coordinator", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 4, "nama": "Rizal Muzakir", "jabatan": "Field Engineer", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 5, "nama": "Aditya Rahmatulah", "jabatan": "Quality Control", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 6, "nama": "Waluyo Tri Utomo", "jabatan": "QC Inspektor", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 7, "nama": "Akh. Nur Hidayat", "jabatan": "Paramedic", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 8, "nama": "Chyntya Intan Valenia", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 9, "nama": "Reni Wulandari", "jabatan": "Admin QC", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 10, "nama": "M. Subhan", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 11, "nama": "Moh. Shoinun", "jabatan": "Driver", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 12, "nama": "Linda Ayu Ramadani", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 13, "nama": "Amalia Nur Alfina", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 14, "nama": "Aliya Puspitasari", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 15, "nama": "Viola Rahmadini", "jabatan": "Safetyman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 16, "nama": "Sugiono", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 17, "nama": "Tarmuji", "jabatan": "Foreman", "cat": "staff", "absen": false, "alasan": "", "ket": ""}, {"no": 18, "nama": "Ngationo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 19, "nama": "Lasmo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 20, "nama": "Widodo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 21, "nama": "Akhmad Jamaludin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 22, "nama": "Andry Sunaryo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 23, "nama": "Sunarto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 24, "nama": "M. Wiji Utomo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 25, "nama": "Sa'dun", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 26, "nama": "Mochammad Muzaedin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 27, "nama": "Kacung Agus P.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 28, "nama": "Muhammad Alif", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 29, "nama": "Prayuda Akbar", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 30, "nama": "M. Wahyudi", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 31, "nama": "Sunjoto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 32, "nama": "Jupriono", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 33, "nama": "Ahmad Erwin", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 34, "nama": "Kasnadi", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 35, "nama": "Ali Mustofa", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 36, "nama": "Arif Hidayatullah", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 37, "nama": "Yaskun", "jabatan": "Skill Insulation", "cat": "skill", "absen": true, "alasan": "", "ket": ""}, {"no": 38, "nama": "Deny Wibowo", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 39, "nama": "M. Sirojul M.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 40, "nama": "Heri Purwanto", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 41, "nama": "Rahmadani Yusuf", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 42, "nama": "Aldo Langgeng W.", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 43, "nama": "M. Sofyan Dimas Eka", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 44, "nama": "Winarno", "jabatan": "Skill Insulation", "cat": "skill", "absen": false, "alasan": "", "ket": ""}, {"no": 45, "nama": "Musta'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 46, "nama": "Kevin Putra", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 47, "nama": "Agus Purwanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 48, "nama": "Habib Ardiansyah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 49, "nama": "Sakhuan", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 50, "nama": "Reggi Andhika Azhi Hamdhani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 51, "nama": "Syaiful Anwar", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 52, "nama": "Syai'in", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 53, "nama": "Ahmad Zaki Al Amin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 54, "nama": "Herman Felani", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 55, "nama": "Alif Setyo Budi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 56, "nama": "Muhammad Syaifudin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 57, "nama": "Ilal Muslimin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 58, "nama": "Kiki Dwi Prastyo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 59, "nama": "Winaryo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 60, "nama": "Ahmad Bayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 61, "nama": "Lamsi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 62, "nama": "Susanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 63, "nama": "Charis Ilham K.", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 64, "nama": "Ahmad Nur Efendi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 65, "nama": "Arga Setya Nawala", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 66, "nama": "Sugeng Agung Santoso", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 67, "nama": "Muhammad Dodi", "jabatan": "Helper", "cat": "helper", "absen": true, "alasan": "", "ket": ""}, {"no": 68, "nama": "Handa Rama Novantio", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 69, "nama": "Muhammad Dani Ardinata", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 70, "nama": "Budi Rahayu", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 71, "nama": "Hendro Sasmito", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 72, "nama": "Juditomo", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 73, "nama": "Muntakip", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 74, "nama": "M. Dhevit", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 75, "nama": "Ahmad Wiranto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 76, "nama": "Jamin", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 77, "nama": "Sarmadi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 78, "nama": "Hendrik Eko", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 79, "nama": "Gilang Febriyansah", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 80, "nama": "Darmawan Eko", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 81, "nama": "Rizki Kristiyanto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 82, "nama": "Gunanto Abdul Hadi", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}, {"no": 83, "nama": "Narto", "jabatan": "Helper", "cat": "helper", "absen": false, "alasan": "", "ket": ""}]}];
 
-const CATS = {skill:"Skill",helper:"Helper",staff:"Staff / Pengawas"};
+const CAT_KEYS = ["skill","helper","gudang","staff"];
+const CATS = {skill:"Skill",helper:"Helper",gudang:"Tim Gudang",staff:"Staff / Pengawas"};
+const CSHORT = {skill:"Skill",helper:"Helper",gudang:"Gudang",staff:"Staff"};
+const RCODE = {sakit_surat:"S",sakit:"ST",izin:"I",cuti:"C",alpa:"A","":"?"};
+const isGudang = j => /gudang|warehouse|\bgdg\b/i.test(j||"");
 const REASONS = [
   ["sakit_surat","Sakit – ada surat"],
   ["sakit","Sakit – tanpa surat"],
@@ -329,7 +438,16 @@ const REASONS = [
 const RLABEL = Object.fromEntries(REASONS); RLABEL[""]="Belum diisi";
 const RKEYS = [...REASONS.map(r=>r[0]),""];
 const rcolor = k => `var(--r-${k||"none"})`;
-const catOf = j => { j=(j||"").toLowerCase(); if(j.includes("skill")||j.includes("insul")) return "skill"; if(j.includes("helper")) return "helper"; return "staff"; };
+const catOf = j => { if(isGudang(j)) return "gudang"; j=(j||"").toLowerCase(); if(j.includes("skill")||j.includes("insul")) return "skill"; if(j.includes("helper")) return "helper"; return "staff"; };
+/* Tim Gudang: daftar nama tetap. Berlaku ke semua hari, termasuk data lama (hanya tampilan & rekap; data asli tidak dihapus) */
+const GUDANG_DEFAULT = ["Yaskun","Musta'in","Kiki Dwi Prastyo","Ilal Muslimin","Susanto","Sugeng Agung Santoso","Jamin"];
+function gudangList(){ try{ const v=JSON.parse(localStorage.getItem("smt_gudang")||"null"); if(Array.isArray(v)) return v; }catch{} return GUDANG_DEFAULT.slice(); }
+function setGudangList(l){ try{ localStorage.setItem("smt_gudang",JSON.stringify(l)); }catch{} }
+function gudangMatch(nama){ const k=keyOf(nama); if(!k) return null; return gudangList().find(n=>keyOf(n)===k || sim(n,nama)>=0.86) || null; }
+const fixCat = r => {
+  if(gudangMatch(r.nama)){ r.cat="gudang"; if(!isGudang(r.jabatan)) r.jabatan=/skill|insul/i.test(r.jabatan||"")?"Skill Gudang":"Helper Gudang"; }
+  else if(isGudang(r.jabatan) && (r.cat==="helper"||r.cat==="skill"||!r.cat)) r.cat="gudang";
+  if(!CATS[r.cat]) r.cat=catOf(r.jabatan); return r; };
 const keyOf = n => String(n||"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,"0");
@@ -352,7 +470,7 @@ const PROMPT=`Gambar ini adalah foto satu halaman lembar "Daftar Hadir Safety Mo
 Baca SETIAP baris yang punya nama:
 - "no": nomor urut (angka).
 - "nama": nama persis seperti tertulis.
-- "jabatan": isi kolom Jabatan (contoh: Skill Insulation, Helper, Foreman, Safetyman, Driver, Supervisor).
+- "jabatan": isi kolom Jabatan LENGKAP persis seperti tertulis (contoh: Skill Insulation, Helper, Helper Gudang, Foreman, Safetyman, Driver, Supervisor). PENTING: kalau tertulis "Helper Gudang" (atau Helper Gdg / Gudang), tulis "Helper Gudang" — jangan disingkat jadi "Helper".
 - "dilingkari": true jika NOMOR urut baris itu diberi lingkaran tangan (pulpen) — artinya tidak hadir; false jika tidak. Patokannya hanya lingkaran di nomor, bukan ada/tidaknya tanda tangan.
 Abaikan baris kosong tanpa nama. Isi "waktu" dengan isi kolom Waktu jika ada di halaman ini, kalau tidak "".
 Balas HANYA JSON: {"waktu":"","rows":[{"no":29,"nama":"Prayuda Akbar","jabatan":"Skill Insulation","dilingkari":true}]}`;
@@ -415,7 +533,7 @@ async function connect(){
 }
 function loadAll(){
   try{ const j={items:readStore()}; if(j.items===null) throw new Error("Memori browser tidak bisa dibaca (mode penyamaran?).");
-    riwayat=new Map(j.items.map(d=>[d.tanggal,d]));
+    riwayat=new Map(j.items.map(d=>[d.tanggal,{...d,rows:(d.rows||[]).map(r=>fixCat({...r}))}]));
     stat($("dataStatus"),`${riwayat.size} hari tersimpan di HP ini. Buat Backup sebulan sekali supaya aman.`,"good"); }
   catch(e){ stat($("dataStatus"),e.message,"err"); }
   afterLoad();
@@ -445,7 +563,7 @@ function renderToday(){
   const abs=rows.filter(r=>r.absen);
   $("tAll").textContent=rows.length; $("tAbs").textContent=abs.length; $("tHadir").textContent=rows.length-abs.length;
   let h="";
-  for(const k of ["skill","helper","staff"]){ const all=rows.filter(r=>r.cat===k).length, a=rows.filter(r=>r.cat===k&&r.absen).length;
+  for(const k of CAT_KEYS){ const all=rows.filter(r=>r.cat===k).length, a=rows.filter(r=>r.cat===k&&r.absen).length;
     h+=`<tr><td><span class="dot k-${k}"></span>${CATS[k]}</td><td class="n">${all}</td><td class="n">${all-a}</td><td class="n${a?" abs":""}">${a}</td></tr>`; }
   h+=`<tr class="sum"><td>Total</td><td class="n">${rows.length}</td><td class="n">${rows.length-abs.length}</td><td class="n${abs.length?" abs":""}">${abs.length}</td></tr>`;
   $("catBody").innerHTML=h;
@@ -469,14 +587,21 @@ function renderToday(){
   rows.forEach((r,i)=>{
     if(filt==="abs"&&!r.absen) return; if(CATS[filt]&&r.cat!==filt) return;
     const d=document.createElement("div"); d.className="row"+(r.absen?" abs":"");
-    d.innerHTML=`<div class="no"></div><div class="who"><input id="nm-${i}" aria-label="Nama"><select id="ct-${i}" aria-label="Kategori"><option value="skill">Skill</option><option value="helper">Helper</option><option value="staff">Staff / Pengawas</option></select></div><button class="tg ${r.absen?"off":"on"}">${r.absen?"Tidak hadir":"Hadir"}</button>`;
+    d.innerHTML=`<div class="no"></div><div class="who"><input id="nm-${i}" aria-label="Nama"><select id="ct-${i}" aria-label="Kategori">${CAT_KEYS.map(k=>`<option value="${k}">${CATS[k]}</option>`).join("")}</select></div><button class="tg ${r.absen?"off":"on"}">${r.absen?"Tidak hadir":"Hadir"}</button>`;
     d.querySelector(".no").textContent=r.no;
     const inp=d.querySelector("input"); inp.value=r.nama; inp.onchange=()=>{r.nama=inp.value; setDirty(true); renderToday();};
-    const sel=d.querySelector("select"); sel.value=r.cat; sel.onchange=()=>{r.cat=sel.value; setDirty(true); renderToday();};
+    const sel=d.querySelector("select"); sel.value=r.cat; sel.onchange=()=>{r.cat=sel.value;
+      if(r.cat==="gudang" && !isGudang(r.jabatan)) r.jabatan=/skill|insul/i.test(r.jabatan||"")?"Skill Gudang":"Helper Gudang";
+      else if(r.cat!=="gudang" && isGudang(r.jabatan)) r.jabatan=String(r.jabatan).replace(/\s*(gudang|warehouse|gdg)\s*/ig," ").trim()||CSHORT[r.cat];
+      /* ikut ubah daftar Tim Gudang supaya berlaku di semua hari */
+      const g=gudangList(), m=gudangMatch(r.nama);
+      if(r.cat==="gudang" && !m) setGudangList([...g,r.nama]); else if(r.cat!=="gudang" && m) setGudangList(g.filter(n=>n!==m));
+      setDirty(true); renderToday(); renderGudang();};
     d.querySelector("button").onclick=()=>{ r.absen=!r.absen; if(!r.absen){r.alasan="";r.ket="";} setDirty(true); renderToday(); };
     rb.appendChild(d);
   });
   renderDelZone();
+  renderChanges();
 }
 /* tanpa baca foto: salin daftar nama dari hari terakhir, semua hadir, lalu klik yang tidak hadir */
 function renderCopyPrev(){
@@ -487,6 +612,39 @@ function renderCopyPrev(){
   const b=document.createElement("button"); b.textContent=`📋 Pakai daftar nama dari ${fmtShort(prev)} (semua hadir, lalu klik yang tidak hadir)`;
   b.onclick=()=>{ cur.rows=(riwayat.get(prev).rows||[]).map(r=>({no:r.no,nama:r.nama,jabatan:r.jabatan,cat:r.cat,absen:false,alasan:"",ket:""})); setDirty(true); filt="all"; renderToday(); };
   z.appendChild(b);
+}
+/* ---------- PEKERJA BARU / KELUAR ---------- */
+function sim(a,b){ a=keyOf(a); b=keyOf(b); if(!a||!b) return 0; let pr=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){ const c=[i]; for(let j=1;j<=b.length;j++) c[j]=Math.min(pr[j]+1,c[j-1]+1,pr[j-1]+(a[i-1]===b[j-1]?0:1)); pr=c; }
+  return 1-pr[b.length]/Math.max(a.length,b.length); }
+/* bandingkan daftar nama hari ini dengan hari tersimpan sebelumnya */
+function dayDiff(){
+  if(!cur.rows.length) return null;
+  const prevT=[...riwayat.keys()].filter(t=>t<cur.tanggal).sort().pop(); if(!prevT) return null;
+  const prev=riwayat.get(prevT).rows||[];
+  const ck=new Set(cur.rows.map(r=>keyOf(r.nama))), pk=new Set(prev.map(r=>keyOf(r.nama)));
+  const added=cur.rows.filter(r=>!pk.has(keyOf(r.nama))), removed=prev.filter(r=>!ck.has(keyOf(r.nama)));
+  const hint=new Map(), hintR=new Map();
+  for(const a of added){ let best=null,bs=0; for(const r of removed){ const v=sim(a.nama,r.nama); if(v>bs){bs=v;best=r;} } if(best&&bs>=0.72){ hint.set(a,best); hintR.set(best,a); } }
+  return {prevT,added,removed,hint,hintR};
+}
+function renderChanges(){
+  const sec=$("chgPanel"), box=$("chgBox"), d=dayDiff();
+  if(!d){ sec.hidden=true; return; } sec.hidden=false;
+  if(!d.added.length&&!d.removed.length){ box.innerHTML=`<p class="empty">Daftar nama sama dengan ${esc(fmtDay(d.prevT))} ${esc(fmtShort(d.prevT))} — tidak ada pekerja baru atau yang keluar.</p>`; return; }
+  box.innerHTML=`<p class="hint">Dibanding daftar terakhir (${esc(fmtDay(d.prevT))} ${esc(fmtShort(d.prevT))}). Kalau ada halaman foto yang belum dibaca, nama di halaman itu akan terlihat seperti keluar — cek dulu.</p>`;
+  if(d.added.length){ const c=document.createElement("div"); c.className="chg new";
+    c.innerHTML=`<h3>🆕 Pekerja baru mulai ${esc(fmtShort(cur.tanggal))} (${d.added.length} orang)</h3><ul></ul>`;
+    for(const a of d.added){ const li=document.createElement("li"); li.innerHTML=`<b></b><small></small>`; li.querySelector("b").textContent=`${a.no}. ${a.nama}`; li.querySelector("small").textContent=`${a.jabatan} · ${CATS[a.cat]}`;
+      const o=d.hint.get(a); if(o){ const w=document.createElement("div"); w.className="warn"; w.append(`⚠ Mirip "${o.nama}" di daftar kemarin — mungkin salah baca, bukan orang baru.`);
+        const b=document.createElement("button"); b.textContent=`Samakan jadi "${o.nama}"`; b.onclick=()=>{ a.nama=o.nama; setDirty(true); renderToday(); }; w.appendChild(b); li.appendChild(w); }
+      c.querySelector("ul").appendChild(li); }
+    box.appendChild(c); }
+  if(d.removed.length){ const c=document.createElement("div"); c.className="chg out";
+    c.innerHTML=`<h3>🚪 Tidak ada lagi di daftar → Resign / Pindah mulai ${esc(fmtShort(cur.tanggal))} (${d.removed.length} orang)</h3><ul></ul>`;
+    for(const r of d.removed){ const li=document.createElement("li"); li.innerHTML=`<b></b><small></small>`; li.querySelector("b").textContent=r.nama; li.querySelector("small").textContent=`${r.jabatan} · ${CATS[r.cat]||r.cat} · terakhir ada di daftar ${fmtShort(d.prevT)}`+(d.hintR.has(r)?` · ⚠ mirip "${d.hintR.get(r).nama}" di daftar hari ini`:"");
+      c.querySelector("ul").appendChild(li); }
+    box.appendChild(c); }
 }
 function renderDelZone(state){
   const z=$("delZone"); z.innerHTML="";
@@ -499,16 +657,19 @@ function renderDelZone(state){
 function reportText(){
   const rows=cur.rows, abs=rows.filter(r=>r.absen);
   const c=k=>{const all=rows.filter(r=>r.cat===k).length,a=rows.filter(r=>r.cat===k&&r.absen).length;return {all,a,h:all-a};};
-  const s=c("skill"),h=c("helper"),st=c("staff");
+  const s=c("skill"),h=c("helper"),g=c("gudang"),st=c("staff");
   let t=`*REKAP DAFTAR HADIR SMT*\n${fmtLong(cur.tanggal)}${cur.waktu?" | "+cur.waktu:""}\n\n`;
   t+=`Terdaftar   : ${rows.length} orang\nHadir       : ${rows.length-abs.length} orang\nTidak hadir : ${abs.length} orang\n\n`;
-  t+=`Skill  : ${s.h} hadir / ${s.all} (tdk hadir ${s.a})\nHelper : ${h.h} hadir / ${h.all} (tdk hadir ${h.a})\nStaff  : ${st.h} hadir / ${st.all} (tdk hadir ${st.a})\n`;
-  if(abs.length) t+=`\n*Tidak hadir:*\n`+abs.map(r=>`${r.no}. ${r.nama} (${CATS[r.cat].split(" ")[0]}) – ${RLABEL[r.alasan||""]}${r.ket?" – "+r.ket:""}`).join("\n");
+  t+=`Skill         : ${s.h} hadir / ${s.all} (tdk hadir ${s.a})\nHelper        : ${h.h} hadir / ${h.all} (tdk hadir ${h.a})\n`+(g.all?`Gudang        : ${g.h} hadir / ${g.all} (tdk hadir ${g.a})\n`:"")+`Staff         : ${st.h} hadir / ${st.all} (tdk hadir ${st.a})\n`;
+  const dd=dayDiff();
+  if(dd&&dd.added.length) t+=`\n*Pekerja baru (mulai hari ini):*\n`+dd.added.map(r=>`${r.no}. ${r.nama} (${CSHORT[r.cat]||r.cat})`).join("\n")+"\n";
+  if(dd&&dd.removed.length) t+=`\n*Keluar dari daftar (resign/pindah):*\n`+dd.removed.map(r=>`- ${r.nama} (${CSHORT[r.cat]||r.cat})`).join("\n")+"\n";
+  if(abs.length) t+=`\n*Tidak hadir:*\n`+abs.map(r=>`${r.no}. ${r.nama} (${CSHORT[r.cat]||r.cat}) – ${RLABEL[r.alasan||""]}${r.ket?" – "+r.ket:""}`).join("\n");
   return t;
 }
 function loadDay(iso){
   const d=riwayat.get(iso);
-  cur = d ? {tanggal:iso, waktu:d.waktu||"", rows:(d.rows||[]).map(r=>({...r}))} : {tanggal:iso, waktu:cur.waktu, rows:[]};
+  cur = d ? {tanggal:iso, waktu:d.waktu||"", rows:(d.rows||[]).map(r=>fixCat({...r}))} : {tanggal:iso, waktu:cur.waktu, rows:[]};
   setDirty(false); renderToday();
 }
 $("tgl").onchange=e=>{
@@ -587,7 +748,7 @@ $("readBtn").onclick=async()=>{
   if(!merged.size && !aborted && !failed){ stat($("status"),"Tidak ada nama yang terbaca. Foto ulang lebih dekat, tegak, dan terang.","err"); }
   if(merged.size){
     const list=[...merged.values()].sort((a,b)=>a.no-b.no);
-    let last=""; for(const r of list){ if(!r.jabatan) r.jabatan=last; last=r.jabatan; r.cat=catOf(r.jabatan); }
+    let last=""; for(const r of list){ if(!r.jabatan) r.jabatan=last; last=r.jabatan; r.cat=catOf(r.jabatan); fixCat(r); }
     const old=riwayat.get(cur.tanggal); if(old){ const m=new Map(old.rows.map(r=>[keyOf(r.nama),r])); for(const r of list){ const o=m.get(keyOf(r.nama)); if(o&&r.absen&&o.absen){ r.alasan=o.alasan||""; r.ket=o.ket||""; } } }
     cur.rows=list; if(waktu) cur.waktu=waktu; setDirty(true); renderToday();
     const gaps=[]; for(let n=1;n<=list[list.length-1].no;n++) if(!merged.has(n)) gaps.push(n);
@@ -611,7 +772,7 @@ function renderHist(){
   $("periodLabel").textContent=periodLabel();
   const docs=[...riwayat.values()].filter(d=>inPeriod(d.tanggal)).sort((a,b)=>b.tanggal.localeCompare(a.tanggal));
   $("hDays").textContent=docs.length;
-  let reg=0, abs=0; const rc=Object.fromEntries(RKEYS.map(k=>[k,0])); const cat={skill:[0,0],helper:[0,0],staff:[0,0]};
+  let reg=0, abs=0; const rc=Object.fromEntries(RKEYS.map(k=>[k,0])); const cat={skill:[0,0],helper:[0,0],gudang:[0,0],staff:[0,0]};
   const people=new Map();
   for(const d of docs){ const rows=d.rows||[]; reg+=rows.length;
     for(const r of rows){ cat[r.cat]=cat[r.cat]||[0,0]; cat[r.cat][0]++;
@@ -620,11 +781,12 @@ function renderHist(){
       people.get(k).list.push({t:d.tanggal,a:r.alasan||"",ket:r.ket||""}); } }
   $("hAbs").textContent=abs; $("hRate").textContent=reg?Math.round((reg-abs)/reg*100)+"%":"–";
   $("reasonBody").innerHTML=RKEYS.map(k=>`<tr><td><span class="dot" style="background:${rcolor(k)}"></span>${RLABEL[k]}</td><td class="n">${rc[k]}</td></tr>`).join("");
-  $("hCatBody").innerHTML=["skill","helper","staff"].map(k=>`<tr><td><span class="dot k-${k}"></span>${CATS[k]}</td><td class="n">${docs.length?Math.round(cat[k][0]/docs.length):0}</td><td class="n${cat[k][1]?" abs":""}">${cat[k][1]}</td></tr>`).join("");
+  $("hCatBody").innerHTML=CAT_KEYS.map(k=>`<tr><td><span class="dot k-${k}"></span>${CATS[k]}</td><td class="n">${docs.length?Math.round(cat[k][0]/docs.length):0}</td><td class="n${cat[k][1]?" abs":""}">${cat[k][1]}</td></tr>`).join("");
   $("legend").innerHTML=RKEYS.map(k=>`<span><i class="sw" style="background:${rcolor(k)}"></i>${RLABEL[k]}</span>`).join("");
 
   const rk=$("rank"); rk.innerHTML="";
-  const ppl=[...people.values()].filter(p=>rankF==="all"||p.cat===rankF).sort((a,b)=>b.list.length-a.list.length||a.nama.localeCompare(b.nama));
+  const hid=arsipSet();
+  const ppl=[...people.values()].filter(p=>(rankF==="all"||p.cat===rankF)&&!hid.has(keyOf(p.nama))).sort((a,b)=>b.list.length-a.list.length||a.nama.localeCompare(b.nama));
   if(!ppl.length) rk.innerHTML=`<p class="empty">${docs.length?"Tidak ada yang tidak hadir pada periode ini.":"Belum ada rekap tersimpan pada periode ini."}</p>`;
   ppl.slice(0,50).forEach((p,i)=>{
     const det=document.createElement("details");
@@ -634,6 +796,9 @@ function renderHist(){
     const ul=det.querySelector("ul"); p.list.sort((a,b)=>b.t.localeCompare(a.t)).forEach(x=>{ const li=document.createElement("li"); li.innerHTML=`<b></b>`; li.querySelector("b").textContent=fmtShort(x.t); li.append(RLABEL[x.a]+(x.ket?" – "+x.ket:"")); ul.appendChild(li); });
     rk.appendChild(det);
   });
+
+  renderCharts(docs.slice().reverse());
+  renderKelola();
 
   const box=$("days"); box.innerHTML="";
   if(!docs.length) box.innerHTML=`<p class="empty">Belum ada rekap tersimpan pada periode ini. Simpan rekap dari tab Hari ini.</p>`;
@@ -647,6 +812,413 @@ $("modeChips").onclick=e=>{const b=e.target.closest("button"); if(!b) return; mo
 $("rankFilter").onclick=e=>{const b=e.target.closest("button"); if(!b) return; rankF=b.dataset.f; for(const x of $("rankFilter").children) x.setAttribute("aria-pressed",x===b); renderHist();};
 for(const id of ["bulan","dari","sampai"]) $(id).onchange=renderHist;
 
+/* ---------- GRAFIK ---------- */
+let selPerson="", hmF="all", lastDocs=[], lastPeople=new Map();
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dm = iso => { const d=new Date(iso+"T00:00:00"); return `${d.getDate()}/${d.getMonth()+1}`; };
+const stOf = r => !r ? "none" : (r.absen ? "a_"+(r.alasan||"") : "hadir");
+const NOLIST = ["none","pre","out"];
+const stColor = st => st==="hadir" ? "var(--ok)" : NOLIST.includes(st) ? "transparent" : rcolor(st.slice(2));
+const stLabel = st => st==="hadir" ? "Masuk" : st==="none" ? "Tidak terdaftar hari itu" : st==="pre" ? "Belum bekerja (pekerja baru)" : st==="out" ? "Sudah keluar (resign/pindah)" : "Tidak masuk – "+RLABEL[st.slice(2)];
+const stCode = st => st==="hadir" ? "Masuk" : st==="none" ? "–" : st==="pre" ? "Blm" : st==="out" ? "Keluar" : (st==="a_" ? "Absen" : RCODE[st.slice(2)]);
+const stCls = st => st==="out" ? "out" : NOLIST.includes(st) ? "none" : "";
+/* kapan tiap orang pertama & terakhir ada di daftar (dari SEMUA data tersimpan) */
+let lastLife={m:new Map(),dates:[]};
+function lifeMap(){
+  const ds=[...riwayat.keys()].sort(), m=new Map();
+  for(const t of ds) for(const r of riwayat.get(t).rows||[]){ const k=keyOf(r.nama); if(!k) continue;
+    let x=m.get(k); if(!x){ x={first:t}; m.set(k,x); } x.last=t; x.nama=r.nama; x.jabatan=r.jabatan; x.cat=r.cat; }
+  for(const x of m.values()){ x.baru = x.first>ds[0] ? x.first : null; x.keluar = x.last<ds[ds.length-1] ? ds[ds.indexOf(x.last)+1] : null; }
+  return {m,dates:ds};
+}
+function stAt(p,t){ const r=p.days.get(t); if(r) return stOf(r); const L=p.life; if(L&&t<L.first) return "pre"; if(L&&L.keluar&&t>=L.keluar) return "out"; return "none"; }
+function statusText(L){ if(!L) return "Aktif"; const a=[]; if(L.baru) a.push("Pekerja baru mulai "+fmtShort(L.baru)); if(L.keluar) a.push("Resign/Pindah mulai "+fmtShort(L.keluar)); return a.join(" · ")||"Aktif"; }
+const badges = L => (L&&L.baru?`<span class="bdg n">BARU</span>`:"")+(L&&L.keluar?`<span class="bdg o">KELUAR</span>`:"");
+const absOf = (d,k) => (d.rows||[]).filter(r=>r.absen&&(!k||r.cat===k)).length;
+
+/* kumpulkan data per orang (kunci = nama), urut dari hari paling awal ke akhir */
+/* orang yang disembunyikan (arsip) — hanya disembunyikan dari tampilan per orang, data harian tetap */
+function arsipSet(){ try{ const v=JSON.parse(localStorage.getItem("smt_arsip")||"[]"); return new Set(Array.isArray(v)?v:[]); }catch{ return new Set(); } }
+function setArsip(set){ try{ localStorage.setItem("smt_arsip",JSON.stringify([...set])); }catch{} }
+function buildPeople(docsAsc){
+  const m=new Map(), hid=arsipSet();
+  for(const d of docsAsc) for(const r of (d.rows||[])){ const k=keyOf(r.nama); if(!k) continue;
+    if(hid.has(k)) continue;
+    let p=m.get(k); if(!p){ p={key:k,days:new Map()}; m.set(k,p); }
+    p.nama=r.nama; p.jabatan=r.jabatan; p.cat=r.cat; p.days.set(d.tanggal,r); }
+  for(const p of m.values()){ p.life=lastLife.m.get(p.key); p.terdaftar=p.days.size; p.absen=[...p.days.values()].filter(r=>r.absen).length; p.hadir=p.terdaftar-p.absen; }
+  return m;
+}
+
+/* grafik batang bertumpuk (SVG), ukuran mengikuti lebar layar; banyak hari → bisa digeser */
+function drawStack(el, docs, series){
+  const n=docs.length; if(!n){ el.innerHTML=`<p class="empty">Belum ada data pada periode ini.</p>`; return; }
+  const cw=Math.max(300, el.clientWidth||640);
+  const totals=docs.map(d=>series.reduce((a,s)=>a+s.val(d),0));
+  let max=Math.max(1,...totals); const sy= max<=10?2 : max<=25?5 : max<=60?10 : max<=150?25 : 50; max=Math.ceil(max/sy)*sy;
+  const pl=30, pr=6, pt=10, pb=34, H=210, ih=H-pt-pb;
+  const bw=Math.max(16, (cw-pl-pr)/n), W=Math.round(pl+pr+bw*n);
+  const y=v=>pt+ih-(v/max)*ih;
+  let g="";
+  for(let v=0; v<=max; v+=sy) g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-5}" y="${y(v)+3.5}" font-size="10" text-anchor="end">${v}</text>`;
+  const every=Math.max(1,Math.ceil(30/bw));
+  docs.forEach((d,i)=>{ const x=pl+i*bw+bw*0.15, w=bw*0.7; let acc=0, parts="";
+    for(const s of series){ const v=s.val(d); if(!v) continue; parts+=`<rect x="${x.toFixed(1)}" y="${y(acc+v).toFixed(1)}" width="${w.toFixed(1)}" height="${(y(acc)-y(acc+v)).toFixed(1)}" fill="${s.color}" rx="1.5"/>`; acc+=v; }
+    if(totals[i]) parts+=`<text x="${(x+w/2).toFixed(1)}" y="${(y(acc)-3).toFixed(1)}" font-size="9" text-anchor="middle">${series.length===2?series[1].val(d):acc}</text>`;
+    const tip=`${fmtLong(d.tanggal)} — `+series.map(s=>`${s.label}: ${s.val(d)}`).join(" · ");
+    g+=`<g data-tip="${esc(tip)}" style="cursor:pointer"><title>${esc(tip)}</title><rect x="${(pl+i*bw).toFixed(1)}" y="${pt}" width="${bw.toFixed(1)}" height="${ih}" fill="transparent"/>${parts}</g>`;
+    if(i%every===0) g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-pb+14}" font-size="10" text-anchor="middle">${dm(d.tanggal)}</text><text x="${(x+w/2).toFixed(1)}" y="${H-pb+26}" font-size="9" text-anchor="middle">${esc(fmtDay(d.tanggal))}</text>`;
+  });
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="width:${W}px" role="img" aria-label="Grafik batang per hari">${g}</svg><p class="status ci"></p>`;
+  el.onclick=e=>{ const t=e.target.closest("g[data-tip]"); if(t) el.querySelector(".ci").textContent=t.dataset.tip; };
+}
+function drawCharts(){
+  const d=lastDocs;
+  drawStack($("chartDaily"), d, [
+    {label:"Hadir", color:"var(--ok)", val:x=>(x.rows||[]).length-absOf(x)},
+    {label:"Tidak hadir", color:"var(--absent)", val:x=>absOf(x)} ]);
+  drawStack($("chartCat"), d, CAT_KEYS.map(k=>({label:CATS[k], color:`var(--${k})`, val:x=>absOf(x,k)})));
+}
+function renderCharts(docsAsc){
+  lastLife=lifeMap(); lastDocs=docsAsc; lastPeople=buildPeople(docsAsc);
+  $("chartLabel").textContent=periodLabel();
+  $("catLegend").innerHTML=CAT_KEYS.map(k=>`<span><i class="sw k-${k}"></i>${CATS[k]}</span>`).join("");
+  $("hmLegend").innerHTML=`<span><i class="sw" style="background:var(--ok)"></i>Masuk</span>`+REASONS.map(([k,l])=>`<span><i class="sw" style="background:${rcolor(k)}"></i>${l}</span>`).join("")+`<span><i class="sw" style="background:${rcolor("")}"></i>Alasan belum diisi</span><span><i class="sw" style="background:var(--bg);border:1px solid var(--line)"></i>Tidak terdaftar / belum bekerja</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,var(--muted) 0 2px,transparent 2px 4px)"></i>Sudah keluar</span><span><span class="bdg n">BARU</span> pekerja baru</span><span><span class="bdg o">KELUAR</span> resign / pindah</span>`;
+  drawCharts(); renderMoves(); renderPersonSel(); renderPerson(); renderHeatmap();
+}
+function renderMoves(){
+  const ev=new Map(); let nb=0,no=0;
+  for(const x of lastLife.m.values()){
+    if(x.baru&&inPeriod(x.baru)){ if(!ev.has(x.baru)) ev.set(x.baru,[]); ev.get(x.baru).push({x,t:"n"}); nb++; }
+    if(x.keluar&&inPeriod(x.keluar)){ if(!ev.has(x.keluar)) ev.set(x.keluar,[]); ev.get(x.keluar).push({x,t:"o"}); no++; } }
+  $("movesLabel").textContent=`· ${nb} baru · ${no} keluar`;
+  const box=$("moves");
+  if(!ev.size){ box.innerHTML=`<p class="empty">Tidak ada pekerja baru atau yang keluar pada periode ini.</p>`; return; }
+  box.innerHTML=[...ev.keys()].sort().reverse().map(t=>`<div><p class="md">${esc(fmtLong(t))}</p><ul>`+ev.get(t).sort((a,b)=>a.t.localeCompare(b.t)).map(({x,t:ty})=>`<li>${ty==="n"?"🆕":"🚪"} <b>${esc(x.nama)}</b> <small>${esc(x.jabatan)} · ${ty==="n"?"pekerja baru, mulai masuk daftar":"resign / pindah — terakhir ada di daftar "+esc(fmtShort(x.last))}</small></li>`).join("")+`</ul></div>`).join("");
+}
+function renderPersonSel(){
+  const sel=$("personSel"), all=[...lastPeople.values()];
+  if(!lastPeople.has(selPerson)) selPerson=(all.slice().sort((a,b)=>b.absen-a.absen||a.nama.localeCompare(b.nama))[0]||{}).key||"";
+  let h="";
+  for(const k of CAT_KEYS){ const g=all.filter(p=>p.cat===k).sort((a,b)=>a.nama.localeCompare(b.nama)); if(!g.length) continue;
+    h+=`<optgroup label="${esc(CATS[k])}">`+g.map(p=>`<option value="${esc(p.key)}">${esc(p.nama)} — ${p.absen}× tidak masuk${p.life&&p.life.baru?" · BARU":""}${p.life&&p.life.keluar?" · KELUAR":""}</option>`).join("")+`</optgroup>`; }
+  sel.innerHTML=h||`<option value="">(belum ada data)</option>`; sel.value=selPerson;
+}
+function renderPerson(){
+  const box=$("personBox"), p=lastPeople.get(selPerson), docs=lastDocs;
+  if(!p){ box.innerHTML=`<p class="empty">Belum ada data pada periode ini.</p>`; return; }
+  const pct=p.terdaftar?Math.round(p.hadir/p.terdaftar*100):0;
+  const cnt={}; for(const r of p.days.values()) if(r.absen){ const k=r.alasan||""; cnt[k]=(cnt[k]||0)+1; }
+  const ks=[...p.days.keys()];
+  let h=`<div class="abs-head"><span class="dot k-${p.cat}" style="width:12px;height:12px"></span><div style="min-width:0"><div class="nm">${esc(p.nama)}</div><div class="jb">${esc(p.jabatan)} · ${esc(CATS[p.cat])} · tercatat ${esc(fmtShort(ks[0]))} – ${esc(fmtShort(ks[ks.length-1]))}</div></div></div>`;
+  if(p.life&&(p.life.baru||p.life.keluar)) h+=`<div class="chg ${p.life.keluar?"out":"new"}" style="padding:8px 10px">`+(p.life.baru?`<b>🆕 Pekerja baru — mulai masuk daftar ${esc(fmtLong(p.life.baru))}</b>`:"")+(p.life.keluar?`<b>🚪 Resign / Pindah — tidak ada di daftar sejak ${esc(fmtLong(p.life.keluar))}</b><small style="color:var(--muted)">Terakhir ada di daftar ${esc(fmtLong(p.life.last))}</small>`:"")+`</div>`;
+  h+=`<div class="totals"><div class="tot"><b>${p.terdaftar}</b><span>Hari terdaftar</span></div><div class="tot hadir"><b>${p.hadir}</b><span>Masuk · ${pct}%</span></div><div class="tot abs"><b>${p.absen}</b><span>Tidak masuk</span></div></div>`;
+  if(p.absen) h+=`<div class="legend">`+RKEYS.filter(k=>cnt[k]).map(k=>`<span><i class="sw" style="background:${rcolor(k)}"></i>${RLABEL[k]}: <b>${cnt[k]}</b></span>`).join("")+`</div>`;
+  h+=`<p class="ctitle">Kalender SMT · ${docs.length} hari (dari ${esc(fmtShort(docs[0].tanggal))} sampai ${esc(fmtShort(docs[docs.length-1].tanggal))})</p><div class="cal">`;
+  for(const d of docs){ const r=p.days.get(d.tanggal), st=stAt(p,d.tanggal);
+    h+=`<div class="${stCls(st)}" ${stCls(st)?"":`style="background:${stColor(st)}"`} title="${esc(fmtLong(d.tanggal)+" – "+stLabel(st)+(r&&r.ket?" – "+r.ket:""))}"><small>${esc(fmtDay(d.tanggal))}</small>${dm(d.tanggal)}<small>${esc(stCode(st))}</small></div>`; }
+  h+=`</div><div class="legend"><span><i class="sw" style="background:var(--ok)"></i>Masuk</span><span>S = sakit ada surat · ST = sakit tanpa surat · I = izin · C = cuti · A = tanpa keterangan</span><span><i class="sw" style="border:1px dashed var(--muted)"></i>Tidak terdaftar / belum bekerja</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,var(--muted) 0 2px,transparent 2px 4px)"></i>Sudah keluar</span></div>`;
+  const off=[...p.days.entries()].filter(([,r])=>r.absen);
+  h+=`<p class="ctitle">Tidak masuk (${off.length} hari)</p>`+(off.length?`<ul class="plist">`+off.map(([t,r])=>`<li><span class="dot" style="background:${rcolor(r.alasan||"")}"></span><b>${esc(fmtDay(t))} ${esc(fmtShort(t))}</b>${esc(RLABEL[r.alasan||""])}${r.ket?" – "+esc(r.ket):""}</li>`).join("")+`</ul>`:`<p class="empty">Selalu masuk pada periode ini.</p>`);
+  const on=[...p.days.entries()].filter(([,r])=>!r.absen).map(([t])=>`${fmtDay(t)} ${fmtShort(t)}`);
+  h+=`<p class="ctitle">Masuk (${on.length} hari)</p><p class="dates">${esc(on.join(" · "))||"–"}</p>`;
+  h+=`<div class="btns"><button id="hideOne">🙈 Sembunyikan orang ini</button></div>`;
+  box.innerHTML=h;
+  $("hideOne").onclick=()=>{ if(!confirm(`Sembunyikan "${p.nama}"? Rekap harian lama tetap sama. Bisa ditampilkan lagi di 🗂️ Kelola orang.`)) return; const a=arsipSet(); a.add(p.key); setArsip(a); renderHist(); };
+}
+function renderHeatmap(){
+  const docs=lastDocs, q=keyOf($("hmSearch").value);
+  const list=[...lastPeople.values()].filter(p=>(hmF==="all"||p.cat===hmF)&&(!q||p.key.includes(q))).sort((a,b)=>b.absen-a.absen||a.nama.localeCompare(b.nama));
+  if(!docs.length||!list.length){ $("hm").innerHTML=`<p class="empty" style="padding:10px">${docs.length?"Tidak ada nama yang cocok.":"Belum ada data pada periode ini."}</p>`; return; }
+  let h=`<table><thead><tr><th class="nmc">Nama (${list.length})</th>`+docs.map(d=>`<th class="dt" title="${esc(fmtLong(d.tanggal))}">${dm(d.tanggal)} ${esc(fmtDay(d.tanggal))}</th>`).join("")+`<th class="dt">Tdk masuk</th></tr></thead><tbody>`;
+  for(const p of list){
+    h+=`<tr data-k="${esc(p.key)}"><td class="nmc" title="${esc(p.nama+" · "+p.jabatan)}"><span class="dot k-${p.cat}"></span>${esc(p.nama)}${badges(p.life)}</td>`;
+    for(const d of docs){ const st=stAt(p,d.tanggal), tip=esc(fmtShort(d.tanggal)+": "+stLabel(st));
+      h+= stCls(st) ? `<td class="c ${stCls(st)}" title="${tip}"></td>` : `<td class="c" style="background:${stColor(st)}" title="${tip}"></td>`; }
+    h+=`<td class="sumc">${p.absen||""}</td></tr>`;
+  }
+  $("hm").innerHTML=h+`</tbody></table>`;
+}
+$("personSel").onchange=e=>{ selPerson=e.target.value; renderPerson(); };
+$("hm").onclick=e=>{ const tr=e.target.closest("tr[data-k]"); if(!tr||!e.target.closest(".nmc")) return; selPerson=tr.dataset.k; $("personSel").value=selPerson; renderPerson(); $("personPanel").scrollIntoView({behavior:"smooth",block:"start"}); };
+$("hmSearch").oninput=()=>renderHeatmap();
+$("hmFilter").onclick=e=>{const b=e.target.closest("button"); if(!b) return; hmF=b.dataset.f; for(const x of $("hmFilter").children) x.setAttribute("aria-pressed",x===b); renderHeatmap();};
+{ let rt; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(!$("viewHist").hidden) drawCharts(); },200); }); }
+
+/* ---------- EXCEL (berwarna) ---------- */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=()=>{ s.remove(); rej(new Error(src)); }; document.head.appendChild(s); }); }
+async function getExcelJS(){
+  if(window.ExcelJS) return window.ExcelJS;
+  for(const u of ["https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js","https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js","https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js"]){
+    try{ await loadScript(u); if(window.ExcelJS) return window.ExcelJS; }catch{} }
+  throw new Error("Perlu koneksi internet untuk membuat Excel (pustaka Excel tidak bisa dimuat).");
+}
+const XC = {
+  head:"FF0B5F8A", sub:"FF134E6F", white:"FFFFFFFF", zebra:"FFF4F7F9", line:"FFD5DCE1", ink:"FF14212B", muted:"FF5B6A75",
+  hadir:["FFC6EFCE","FF006100"], none:["FFF2F2F2","FFA6A6A6"],
+  r:{sakit_surat:["FFBDD7EE","FF1F4E79"], sakit:["FFE4D2F5","FF5B2C87"], izin:["FFC9F1EA","FF0F6B5E"], cuti:["FFE2F5C4","FF3F6212"], alpa:["FFFFC7CE","FF9C0006"], "":["FFFFE699","FF7F6000"]},
+  cat:{skill:["FFEDE4FF","FF5B21B6"], helper:["FFDDF3F7","FF0E7490"], gudang:["FFFDEBD3","FF9A3412"], staff:["FFECEFF3","FF475569"]},
+  catHead:{skill:"FF7C3AED", helper:"FF0E7490", gudang:"FFB45309", staff:"FF64748B"},
+};
+const xFill = c => ({type:"pattern", pattern:"solid", fgColor:{argb:c}});
+const xBorder = {top:{style:"thin",color:{argb:XC.line}},left:{style:"thin",color:{argb:XC.line}},bottom:{style:"thin",color:{argb:XC.line}},right:{style:"thin",color:{argb:XC.line}}};
+function xPaint(cell, pair, bold){ cell.fill=xFill(pair[0]); cell.font={...(cell.font||{}), color:{argb:pair[1]}, bold:!!bold}; }
+function xPctColor(cell, v){ xPaint(cell, v>=0.9?XC.hadir: v>=0.8?["FFFFEB9C","FF7F6000"]:XC.r.alpa, true); }
+function xTitle(ws, text, sub, ncol){
+  ws.mergeCells(1,1,1,ncol); const a=ws.getCell(1,1); a.value=text; a.font={bold:true,size:15,color:{argb:XC.white}}; a.fill=xFill(XC.head); a.alignment={vertical:"middle"}; ws.getRow(1).height=28;
+  ws.mergeCells(2,1,2,ncol); const b=ws.getCell(2,1); b.value=sub; b.font={italic:true,size:10,color:{argb:XC.muted}}; b.fill=xFill("FFE8F1F7");
+}
+function xHead(ws, rowNo, values, colors){
+  const row=ws.getRow(rowNo); row.values=values; row.height=30;
+  row.eachCell((c,i)=>{ c.fill=xFill((colors&&colors[i-1])||XC.sub); c.font={bold:true,color:{argb:XC.white},size:10}; c.alignment={vertical:"middle",horizontal:"center",wrapText:true}; c.border=xBorder; });
+}
+function xBody(row, zebra){ row.eachCell({includeEmpty:false},c=>{ c.border=xBorder; if(zebra && !c.fill) c.fill=xFill(XC.zebra); c.alignment={vertical:"middle",...(c.alignment||{})}; }); }
+
+/* gambar grafik ke PNG untuk ditempel di Excel */
+function chartPNG(docs, series, title, withPct){
+  const n=docs.length, bw=Math.max(18, Math.min(60, 1000/n)), pl=50, pr=withPct?50:20, pt=50, pb=56, W=Math.round(pl+pr+bw*n), H=400, ih=H-pt-pb;
+  const c=document.createElement("canvas"); c.width=W*2; c.height=H*2; const x=c.getContext("2d"); x.scale(2,2);
+  x.fillStyle="#fff"; x.fillRect(0,0,W,H);
+  x.fillStyle="#14212b"; x.font="bold 16px Arial"; x.fillText(title,pl,24);
+  let lx=pl; x.font="12px Arial"; for(const s of [...series,...(withPct?[{label:"% hadir",color:"#0b5f8a"}]:[])]){ x.fillStyle=s.color; x.fillRect(lx,33,12,12); x.fillStyle="#333"; x.fillText(s.label,lx+16,43); lx+=x.measureText(s.label).width+36; }
+  const tot=docs.map(d=>series.reduce((a,s)=>a+s.val(d),0)); let max=Math.max(1,...tot); const sy=max<=10?2:max<=25?5:max<=60?10:max<=150?25:50; max=Math.ceil(max/sy)*sy;
+  const y=v=>pt+ih-(v/max)*ih;
+  x.font="11px Arial"; x.textAlign="right";
+  for(let v=0;v<=max;v+=sy){ x.strokeStyle="#e3e8ec"; x.beginPath(); x.moveTo(pl,y(v)); x.lineTo(W-pr,y(v)); x.stroke(); x.fillStyle="#5b6a75"; x.fillText(String(v),pl-6,y(v)+4); }
+  if(withPct){ x.textAlign="left"; for(let p=0;p<=100;p+=25){ x.fillStyle="#0b5f8a"; x.fillText(p+"%",W-pr+6,pt+ih-(p/100)*ih+4); } }
+  const every=Math.max(1,Math.ceil(36/bw)); x.textAlign="center";
+  docs.forEach((d,i)=>{ const bx=pl+i*bw+bw*0.15, w=bw*0.7; let acc=0;
+    for(const s of series){ const v=s.val(d); if(!v) continue; x.fillStyle=s.color; x.fillRect(bx,y(acc+v),w,y(acc)-y(acc+v)); acc+=v; }
+    if(acc){ x.fillStyle="#333"; x.font="10px Arial"; x.fillText(String(series.length===2?series[1].val(d):acc),bx+w/2,y(acc)-4); }
+    if(i%every===0){ x.fillStyle="#5b6a75"; x.font="11px Arial"; x.fillText(dm(d.tanggal),bx+w/2,H-pb+16); x.font="10px Arial"; x.fillText(fmtDay(d.tanggal),bx+w/2,H-pb+30); }
+  });
+  if(withPct){ x.strokeStyle="#0b5f8a"; x.lineWidth=2; x.beginPath();
+    docs.forEach((d,i)=>{ const n2=(d.rows||[]).length, p=n2?(n2-absOf(d))/n2:0, px=pl+i*bw+bw/2, py=pt+ih-p*ih; i?x.lineTo(px,py):x.moveTo(px,py); }); x.stroke();
+    x.fillStyle="#0b5f8a"; docs.forEach((d,i)=>{ const n2=(d.rows||[]).length, p=n2?(n2-absOf(d))/n2:0; x.beginPath(); x.arc(pl+i*bw+bw/2,pt+ih-p*ih,3,0,7); x.fill(); }); }
+  return {url:c.toDataURL("image/png"), W, H};
+}
+
+async function exportExcel(){
+  const docs=[...riwayat.values()].filter(d=>inPeriod(d.tanggal)).sort((a,b)=>a.tanggal.localeCompare(b.tanggal));
+  if(!docs.length){ stat($("dataStatus"),"Tidak ada data pada periode ini untuk dibuat Excel.","err"); return; }
+  $("xlsBtn").disabled=true; stat($("dataStatus"),"Membuat Excel…");
+  try{
+    const ExcelJS=await getExcelJS();
+    const wb=new ExcelJS.Workbook(); wb.creator="Rekap Absensi SMT"; wb.created=new Date();
+    lastLife=lifeMap(); const LF=lastLife;
+    const people=buildPeople(docs);
+    const per=periodLabel().replace(/^·\s*/,"")||"semua data";
+    const sub=`Periode: ${per} (${fmtShort(docs[0].tanggal)} – ${fmtShort(docs[docs.length-1].tanggal)}) · ${docs.length} hari SMT · dibuat ${new Date().toLocaleString("id-ID")}`;
+
+    /* 1. Ringkasan per hari */
+    { const ws=wb.addWorksheet("Ringkasan",{properties:{tabColor:{argb:XC.head}}});
+      const cols=[5,13,10,11,10,12,10,9,9,13,9,12,10,10]; ws.columns=cols.map(w=>({width:w}));
+      xTitle(ws,"REKAP ABSENSI SAFETY MORNING TALK (SMT)",sub,cols.length);
+      let reg=0,abs=0; for(const d of docs){ reg+=(d.rows||[]).length; abs+=absOf(d); }
+      const kpi=[["Hari SMT",docs.length],["Rata² terdaftar",Math.round(reg/docs.length)],["Rata² hadir",reg?(reg-abs)/reg:0],["Total tidak hadir",abs],["Jumlah orang",people.size]];
+      kpi.forEach(([l,v],i)=>{ const c1=1+i*2+ (i?0:0); const col=1+i*2; ws.mergeCells(4,col,4,col+1); ws.mergeCells(5,col,5,col+1);
+        const a=ws.getCell(4,col); a.value=l; a.font={size:9,bold:true,color:{argb:XC.muted}}; a.alignment={horizontal:"center"}; a.fill=xFill("FFE8F1F7");
+        const b=ws.getCell(5,col); b.value=v; b.font={size:18,bold:true,color:{argb:i===3?"FFC2410C":i===2?"FF15803D":XC.ink}}; b.alignment={horizontal:"center"}; b.fill=xFill("FFE8F1F7"); if(i===2) b.numFmt="0%"; });
+      ws.getRow(5).height=28;
+      const hr=7; xHead(ws,hr,["No","Tanggal","Hari","Terdaftar","Hadir","Tidak hadir","% Hadir","Absen Skill","Absen Helper","Absen Gudang","Absen Staff","Alasan belum diisi","Pekerja baru","Keluar (resign/ pindah)"],
+        [XC.sub,XC.sub,XC.sub,XC.sub,"FF15803D","FFC2410C",XC.sub,XC.catHead.skill,XC.catHead.helper,XC.catHead.gudang,XC.catHead.staff,"FF7F6000","FF15803D","FF595959"]);
+      docs.forEach((d,i)=>{ const n=(d.rows||[]).length, a=absOf(d), r=ws.getRow(hr+1+i);
+        r.values=[i+1,new Date(d.tanggal+"T00:00:00Z"),fmtDay(d.tanggal),n,n-a,a,n?(n-a)/n:0,absOf(d,"skill"),absOf(d,"helper"),absOf(d,"gudang"),absOf(d,"staff"),(d.rows||[]).filter(x=>x.absen&&!x.alasan).length,
+          [...LF.m.values()].filter(x=>x.baru===d.tanggal).length,[...LF.m.values()].filter(x=>x.keluar===d.tanggal).length];
+        r.getCell(2).numFmt="dd-mmm-yyyy"; r.getCell(7).numFmt="0%"; xBody(r,i%2===1); xPctColor(r.getCell(7),r.getCell(7).value);
+        if(r.getCell(13).value) xPaint(r.getCell(13),XC.hadir,true); if(r.getCell(14).value) xPaint(r.getCell(14),["FFD9D9D9","FF262626"],true);
+        for(let c=4;c<=14;c++) r.getCell(c).alignment={horizontal:"center",vertical:"middle"};
+        if(a) r.getCell(6).font={bold:true,color:{argb:"FFC2410C"}};
+        const dow=new Date(d.tanggal+"T00:00:00").getDay(); if(dow===0) r.getCell(3).font={color:{argb:"FFC2410C"},bold:true}; });
+      const last=hr+docs.length, tr=ws.getRow(last+1);
+      tr.values=["","TOTAL / RATA²","",{formula:`SUM(D${hr+1}:D${last})`,result:reg},{formula:`SUM(E${hr+1}:E${last})`,result:reg-abs},{formula:`SUM(F${hr+1}:F${last})`,result:abs},{formula:`IF(D${last+1}=0,0,E${last+1}/D${last+1})`,result:reg?(reg-abs)/reg:0},
+        ...["H","I","J","K","L","M","N"].map(L=>({formula:`SUM(${L}${hr+1}:${L}${last})`}))];
+      tr.eachCell(c=>{ c.font={bold:true,color:{argb:XC.white}}; c.fill=xFill(XC.head); c.border=xBorder; c.alignment={horizontal:"center"}; }); tr.getCell(7).numFmt="0%";
+      /* alasan */
+      let ar=last+3; ws.mergeCells(ar,2,ar,4);
+      for(const [c,v] of [[2,"Alasan tidak hadir"],[5,"Jumlah"]]){ const cell=ws.getCell(ar,c); cell.value=v; cell.fill=xFill(XC.sub); cell.font={bold:true,color:{argb:XC.white}}; cell.alignment={horizontal:"center"}; cell.border=xBorder; }
+      const rc={}; for(const d of docs) for(const r of d.rows||[]) if(r.absen){ const k=r.alasan||""; rc[k]=(rc[k]||0)+1; }
+      RKEYS.forEach((k,i)=>{ const row=ws.getRow(ar+1+i); ws.mergeCells(ar+1+i,2,ar+1+i,4); row.getCell(2).value=RLABEL[k]; row.getCell(5).value=rc[k]||0;
+        xPaint(row.getCell(2),XC.r[k],true); row.getCell(2).border=xBorder; row.getCell(5).border=xBorder; row.getCell(5).alignment={horizontal:"center"}; });
+      /* grafik */
+      let gr=ar+RKEYS.length+3;
+      const ch1=chartPNG(docs,[{label:"Hadir",color:"#22a35a",val:d=>(d.rows||[]).length-absOf(d)},{label:"Tidak hadir",color:"#ea580c",val:d=>absOf(d)}],"Kehadiran SMT per hari",true);
+      const s1=Math.min(1,900/ch1.W); ws.addImage(wb.addImage({base64:ch1.url,extension:"png"}),{tl:{col:0,row:gr},ext:{width:ch1.W*s1,height:ch1.H*s1}});
+      const ch2=chartPNG(docs,CAT_KEYS.map(k=>({label:CATS[k],color:"#"+XC.catHead[k].slice(2),val:d=>absOf(d,k)})),"Tidak hadir per kategori per hari",false);
+      const s2=Math.min(1,900/ch2.W); ws.addImage(wb.addImage({base64:ch2.url,extension:"png"}),{tl:{col:0,row:gr+Math.ceil(ch1.H*s1/20)+2},ext:{width:ch2.W*s2,height:ch2.H*s2}});
+      ws.views=[{state:"frozen",ySplit:hr}];
+      ws.pageSetup={orientation:"portrait",fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};
+    }
+
+    /* 2. Per kategori */
+    { const ws=wb.addWorksheet("Per Kategori",{properties:{tabColor:{argb:XC.catHead.gudang}}});
+      const nc=3+CAT_KEYS.length*3; ws.columns=[{width:13},{width:8},...Array(CAT_KEYS.length*3).fill({width:9}),{width:10}];
+      xTitle(ws,"KEHADIRAN PER KATEGORI",sub,nc);
+      const r1=ws.getRow(4); r1.getCell(1).value="Tanggal"; r1.getCell(2).value="Hari"; ws.mergeCells(4,1,5,1); ws.mergeCells(4,2,5,2);
+      CAT_KEYS.forEach((k,i)=>{ const c=3+i*3; ws.mergeCells(4,c,4,c+2); r1.getCell(c).value=CATS[k]; });
+      r1.getCell(nc).value="Total absen"; ws.mergeCells(4,nc,5,nc);
+      const r2=ws.getRow(5); CAT_KEYS.forEach((k,i)=>{ const c=3+i*3; r2.getCell(c).value="Terdaftar"; r2.getCell(c+1).value="Hadir"; r2.getCell(c+2).value="Absen"; });
+      for(const rr of [4,5]){ const row=ws.getRow(rr); row.height=22; for(let c=1;c<=nc;c++){ const cell=row.getCell(c); const ci=Math.floor((c-3)/3); cell.fill=xFill(c>=3&&c<nc?XC.catHead[CAT_KEYS[ci]]:XC.sub); cell.font={bold:true,color:{argb:XC.white},size:10}; cell.alignment={horizontal:"center",vertical:"middle"}; cell.border=xBorder; } }
+      docs.forEach((d,i)=>{ const row=ws.getRow(6+i); row.getCell(1).value=new Date(d.tanggal+"T00:00:00Z"); row.getCell(1).numFmt="dd-mmm-yyyy"; row.getCell(2).value=fmtDay(d.tanggal);
+        CAT_KEYS.forEach((k,j)=>{ const all=(d.rows||[]).filter(r=>r.cat===k).length, a=absOf(d,k), c=3+j*3;
+          row.getCell(c).value=all; row.getCell(c+1).value=all-a; row.getCell(c+2).value=a;
+          for(let q=0;q<3;q++){ const cell=row.getCell(c+q); cell.fill=xFill(XC.cat[k][0]); cell.alignment={horizontal:"center"}; cell.border=xBorder; }
+          if(a) row.getCell(c+2).font={bold:true,color:{argb:"FFC2410C"}}; });
+        row.getCell(nc).value=absOf(d); row.getCell(nc).font={bold:true,color:{argb:"FFC2410C"}}; row.getCell(nc).alignment={horizontal:"center"};
+        for(const c of [1,2,nc]){ row.getCell(c).border=xBorder; if(i%2) row.getCell(c).fill=xFill(XC.zebra); } });
+      ws.views=[{state:"frozen",xSplit:2,ySplit:5}];
+    }
+
+    /* 3. Matriks kehadiran per orang (dari hari awal sampai akhir) */
+    const plist=[...people.values()].sort((a,b)=>CAT_KEYS.indexOf(a.cat)-CAT_KEYS.indexOf(b.cat)||a.nama.localeCompare(b.nama));
+    { const ws=wb.addWorksheet("Kehadiran Per Orang",{properties:{tabColor:{argb:"FF15803D"}}});
+      const D=docs.length, nc=4+D+5;
+      ws.columns=[{width:5},{width:26},{width:17},{width:14},...Array(D).fill({width:6.5}),{width:10},{width:9},{width:10},{width:9},{width:30}];
+      xTitle(ws,"KEHADIRAN SMT PER ORANG",sub,Math.min(nc,16));
+      const leg=[["H","Masuk",XC.hadir],["S","Sakit ada surat",XC.r.sakit_surat],["ST","Sakit tanpa surat",XC.r.sakit],["I","Izin",XC.r.izin],["C","Cuti",XC.r.cuti],["A","Tanpa ket.",XC.r.alpa],["?","Alasan belum diisi",XC.r[""]],["–","Tidak terdaftar",XC.none],["·","Belum bekerja",["FFFFFFFF","FFBFBFBF"]],["OUT","Resign / pindah",["FFBFBFBF","FF262626"]]];
+      const lr=ws.getRow(3); lr.getCell(1).value="Kode:"; lr.getCell(1).font={bold:true,size:9};
+      leg.forEach(([k,l,c],i)=>{ const cell=lr.getCell(2+i); cell.value=`${k} = ${l}`; xPaint(cell,c,true); cell.font={...cell.font,size:9}; cell.alignment={horizontal:"center",shrinkToFit:true}; cell.border=xBorder; });
+      const HR=5;
+      xHead(ws,HR,["No","Nama","Jabatan","Kategori",...docs.map(d=>`${dm(d.tanggal)}\n${fmtDay(d.tanggal)}`),"Hari terdaftar","Masuk","Tidak masuk","% Masuk","Status"]);
+      for(let i=0;i<D;i++){ if(new Date(docs[i].tanggal+"T00:00:00").getDay()===0) ws.getRow(HR).getCell(5+i).fill=xFill("FFC2410C"); }
+      ws.getRow(HR).height=32;
+      plist.forEach((p,i)=>{ const row=ws.getRow(HR+1+i); row.getCell(1).value=i+1; row.getCell(2).value=p.nama; row.getCell(3).value=p.jabatan; row.getCell(4).value=CATS[p.cat];
+        xPaint(row.getCell(4),XC.cat[p.cat],true);
+        docs.forEach((d,j)=>{ const r=p.days.get(d.tanggal), cell=row.getCell(5+j);
+          const st=stAt(p,d.tanggal);
+          if(st==="pre"){ cell.value="·"; xPaint(cell,["FFFFFFFF","FFBFBFBF"]); }
+          else if(st==="out"){ cell.value="OUT"; xPaint(cell,["FFBFBFBF","FF262626"],true); }
+          else if(!r){ cell.value="–"; xPaint(cell,XC.none); }
+          else if(!r.absen){ cell.value="H"; xPaint(cell,XC.hadir,true); }
+          else { cell.value=RCODE[r.alasan||""]; xPaint(cell,XC.r[r.alasan||""],true); if(r.ket) cell.note=`${RLABEL[r.alasan||""]}: ${r.ket}`; }
+          cell.alignment={horizontal:"center",vertical:"middle"}; cell.border=xBorder; });
+        const pc=p.terdaftar?p.hadir/p.terdaftar:0;
+        row.getCell(5+D).value=p.terdaftar; row.getCell(6+D).value=p.hadir; row.getCell(7+D).value=p.absen; row.getCell(8+D).value=pc; row.getCell(8+D).numFmt="0%";
+        for(let c=5+D;c<=8+D;c++){ row.getCell(c).alignment={horizontal:"center"}; row.getCell(c).border=xBorder; }
+        if(p.absen) row.getCell(7+D).font={bold:true,color:{argb:"FFC2410C"}}; xPctColor(row.getCell(8+D),pc);
+        { const sc=row.getCell(9+D); sc.value=statusText(p.life); sc.border=xBorder; if(p.life&&p.life.keluar) xPaint(sc,["FFD9D9D9","FF262626"],true); else if(p.life&&p.life.baru) xPaint(sc,XC.hadir,true); }
+        for(let c=1;c<=3;c++){ row.getCell(c).border=xBorder; if(i%2) row.getCell(c).fill=xFill(XC.zebra); } });
+      const er=HR+1+plist.length;
+      [["Jumlah masuk",(r)=>r&&!r.absen,"FF15803D"],["Jumlah tidak masuk",(r)=>r&&r.absen,"FFC2410C"]].forEach(([lbl,fn,col],k)=>{
+        const row=ws.getRow(er+k); ws.mergeCells(er+k,1,er+k,4); row.getCell(1).value=lbl; row.getCell(1).font={bold:true,color:{argb:XC.white}}; row.getCell(1).fill=xFill(col);
+        docs.forEach((d,j)=>{ const cell=row.getCell(5+j); cell.value=plist.filter(p=>fn(p.days.get(d.tanggal))).length; cell.font={bold:true,color:{argb:col}}; cell.alignment={horizontal:"center"}; cell.border=xBorder; cell.fill=xFill(XC.zebra); }); });
+      ws.views=[{state:"frozen",xSplit:2,ySplit:HR}];
+      ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9};
+    }
+
+    /* 4. Rekap per orang */
+    { const ws=wb.addWorksheet("Rekap Per Orang",{properties:{tabColor:{argb:"FF7C3AED"}}});
+      const heads=["No","Nama","Jabatan","Kategori","Hari terdaftar","Masuk","Tidak masuk","% Masuk","Sakit ada surat","Sakit tanpa surat","Izin","Cuti","Tanpa ket.","Belum diisi","Tanggal tidak masuk","Status"];
+      ws.columns=[5,26,17,14,10,8,10,9,10,10,7,7,9,9,60,30].map(w=>({width:w}));
+      xTitle(ws,"REKAP KEHADIRAN PER ORANG (urut paling sering tidak masuk)",sub,heads.length);
+      xHead(ws,4,heads,[XC.sub,XC.sub,XC.sub,XC.sub,XC.sub,"FF15803D","FFC2410C",XC.sub,"FF1F4E79","FF5B2C87","FF0F6B5E","FF3F6212","FF9C0006","FF7F6000",XC.sub,XC.sub]);
+      const srt=[...people.values()].sort((a,b)=>b.absen-a.absen||a.nama.localeCompare(b.nama));
+      srt.forEach((p,i)=>{ const cnt={}; const tgl=[]; for(const [t,r] of p.days) if(r.absen){ const k=r.alasan||""; cnt[k]=(cnt[k]||0)+1; tgl.push(`${fmtDay(t)} ${fmtShort(t)} (${RCODE[k]})`); }
+        const pc=p.terdaftar?p.hadir/p.terdaftar:0, row=ws.getRow(5+i);
+        row.values=[i+1,p.nama,p.jabatan,CATS[p.cat],p.terdaftar,p.hadir,p.absen,pc,...RKEYS.map(k=>cnt[k]||""),tgl.join(", ")||"–",statusText(p.life)];
+        xBody(row,i%2===1); row.getCell(8).numFmt="0%"; xPctColor(row.getCell(8),pc); xPaint(row.getCell(4),XC.cat[p.cat],true);
+        for(let c=5;c<=14;c++) row.getCell(c).alignment={horizontal:"center",vertical:"middle"};
+        RKEYS.forEach((k,j)=>{ if(cnt[k]) xPaint(row.getCell(9+j),XC.r[k],true); });
+        if(p.absen) row.getCell(7).font={bold:true,color:{argb:"FFC2410C"}};
+        row.getCell(15).alignment={wrapText:true,vertical:"middle"};
+        if(p.life&&p.life.keluar) xPaint(row.getCell(16),["FFD9D9D9","FF262626"],true); else if(p.life&&p.life.baru) xPaint(row.getCell(16),XC.hadir,true); });
+      ws.autoFilter={from:{row:4,column:1},to:{row:4+srt.length,column:heads.length}};
+      ws.views=[{state:"frozen",xSplit:2,ySplit:4}];
+    }
+
+    /* 5. Detail tidak hadir */
+    { const ws=wb.addWorksheet("Detail Tidak Hadir",{properties:{tabColor:{argb:"FFC2410C"}}});
+      const heads=["No","Tanggal","Hari","No absen","Nama","Jabatan","Kategori","Alasan","Keterangan"];
+      ws.columns=[5,13,9,9,26,17,14,20,40].map(w=>({width:w}));
+      xTitle(ws,"DETAIL TIDAK HADIR",sub,heads.length); xHead(ws,4,heads);
+      let i=0; for(const d of docs) for(const r of (d.rows||[]).filter(x=>x.absen)){
+        const row=ws.getRow(5+i); row.values=[i+1,new Date(d.tanggal+"T00:00:00Z"),fmtDay(d.tanggal),r.no,r.nama,r.jabatan,CATS[r.cat],RLABEL[r.alasan||""],r.ket||""];
+        row.getCell(2).numFmt="dd-mmm-yyyy"; xBody(row,i%2===1); xPaint(row.getCell(7),XC.cat[r.cat],true); xPaint(row.getCell(8),XC.r[r.alasan||""],true);
+        row.getCell(4).alignment={horizontal:"center"}; i++; }
+      if(!i){ ws.getCell(5,1).value="Tidak ada yang tidak hadir pada periode ini."; }
+      ws.autoFilter={from:{row:4,column:1},to:{row:4+Math.max(i,1),column:heads.length}};
+      ws.views=[{state:"frozen",ySplit:4}];
+    }
+
+    /* 6. Pekerja baru & keluar */
+    { const ws=wb.addWorksheet("Pekerja Baru & Keluar",{properties:{tabColor:{argb:"FF595959"}}});
+      const heads=["No","Tanggal","Hari","Perubahan","Nama","Jabatan","Kategori","Keterangan"];
+      ws.columns=[5,13,9,18,26,17,14,40].map(w=>({width:w}));
+      xTitle(ws,"PEKERJA BARU & KELUAR (RESIGN / PINDAH)",sub+" · dibandingkan dengan daftar hari SMT sebelumnya",heads.length); xHead(ws,4,heads);
+      const ev=[]; for(const x of LF.m.values()){ if(x.baru&&inPeriod(x.baru)) ev.push({t:x.baru,ty:"n",x}); if(x.keluar&&inPeriod(x.keluar)) ev.push({t:x.keluar,ty:"o",x}); }
+      ev.sort((a,b)=>a.t.localeCompare(b.t)||a.ty.localeCompare(b.ty)||a.x.nama.localeCompare(b.x.nama));
+      ev.forEach((e,i)=>{ const row=ws.getRow(5+i);
+        row.values=[i+1,new Date(e.t+"T00:00:00Z"),fmtDay(e.t),e.ty==="n"?"Pekerja baru":"Resign / Pindah",e.x.nama,e.x.jabatan,CATS[e.x.cat]||e.x.cat,e.ty==="n"?"Mulai masuk daftar absen":"Terakhir ada di daftar "+fmtLong(e.x.last)];
+        row.getCell(2).numFmt="dd-mmm-yyyy"; xBody(row,i%2===1); xPaint(row.getCell(4),e.ty==="n"?XC.hadir:["FFD9D9D9","FF262626"],true); xPaint(row.getCell(7),XC.cat[e.x.cat]||XC.none,true); });
+      if(!ev.length) ws.getCell(5,1).value="Tidak ada pekerja baru atau yang keluar pada periode ini.";
+      ws.views=[{state:"frozen",ySplit:4}];
+    }
+
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const tag= mode==="month" ? ($("bulan").value||"semua") : mode==="range" ? `${$("dari").value||docs[0].tanggal}_sd_${$("sampai").value||docs[docs.length-1].tanggal}` : "semua";
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Rekap_Absensi_SMT_${tag}.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    stat($("dataStatus"),`Excel dibuat: ${docs.length} hari, ${people.size} orang (6 sheet: Ringkasan + grafik, Per Kategori, Kehadiran Per Orang, Rekap Per Orang, Detail Tidak Hadir, Pekerja Baru & Keluar).`,"good");
+  }catch(e){ stat($("dataStatus"),"Gagal membuat Excel: "+e.message,"err"); }
+  $("xlsBtn").disabled=false;
+}
+$("xlsBtn").onclick=exportExcel;
+
+/* ---------- KELOLA ORANG (sembunyikan / hapus permanen) ---------- */
+function renderKelola(){
+  const L=lifeMap(), hid=arsipSet(), q=keyOf($("kelolaSearch").value), last=L.dates[L.dates.length-1];
+  $("kelolaCount").textContent=hid.size?hid.size+" disembunyikan":"";
+  const box=$("kelolaList"); box.innerHTML="";
+  const days=t=>Math.round((new Date(last+"T00:00:00")-new Date(t+"T00:00:00"))/864e5);
+  let list=[...L.m.entries()].map(([k,x])=>({k,...x}));
+  list = q ? list.filter(x=>x.k.includes(q)) : list.filter(x=>x.keluar && !hid.has(x.k));
+  list.sort((a,b)=> (a.keluar||"9").localeCompare(b.keluar||"9") || a.nama.localeCompare(b.nama));
+  if(!q) box.insertAdjacentHTML("beforeend",`<p class="kh">Sudah resign / pindah (${list.length})</p>`);
+  if(!list.length) box.insertAdjacentHTML("beforeend",`<p class="empty">${q?"Nama tidak ditemukan.":"Belum ada yang resign / pindah."}</p>`);
+  for(const x of list.slice(0,60)) box.appendChild(kelolaRow(x,hid.has(x.k),days));
+  const hl=[...L.m.entries()].filter(([k])=>hid.has(k)).map(([k,x])=>({k,...x}));
+  if(!q && hl.length){ box.insertAdjacentHTML("beforeend",`<p class="kh">Disembunyikan (${hl.length})</p>`); for(const x of hl) box.appendChild(kelolaRow(x,true,days)); }
+}
+function kelolaRow(x,hidden,days){
+  const d=document.createElement("div"); d.className="kp";
+  d.innerHTML=`<div class="nm"></div><div class="btns"></div>`;
+  d.querySelector(".nm").textContent=x.nama;
+  const sm=document.createElement("small");
+  sm.textContent=`${x.jabatan} · ${x.keluar?`resign/pindah sejak ${fmtShort(x.keluar)} (${days(x.keluar)} hari lalu)`:`terakhir ada di daftar ${fmtShort(x.last)}`}${hidden?" · disembunyikan":""}`;
+  d.querySelector(".nm").appendChild(sm);
+  const bt=d.querySelector(".btns");
+  const b1=document.createElement("button"); b1.textContent=hidden?"👁️ Tampilkan lagi":"🙈 Sembunyikan";
+  b1.onclick=()=>{ const a=arsipSet(); hidden?a.delete(x.k):a.add(x.k); setArsip(a); stat($("kelolaStatus"),hidden?`${x.nama} ditampilkan lagi.`:`${x.nama} disembunyikan.`,"good"); renderHist(); };
+  const b2=document.createElement("button"); b2.className="danger"; b2.textContent="🗑️ Hapus permanen"; b2.onclick=()=>hapusPermanen(x);
+  bt.append(b1,b2); return d;
+}
+function hapusPermanen(x){
+  if(dirty&&cur.rows.length){ stat($("kelolaStatus"),"Ada perubahan di tab Hari ini yang belum disimpan. Simpan dulu, baru hapus.","err"); return; }
+  const n=[...riwayat.values()].filter(d=>(d.rows||[]).some(r=>keyOf(r.nama)===x.k)).length;
+  const ok=prompt(`HAPUS PERMANEN "${x.nama}" dari ${n} hari tersimpan?\nJumlah terdaftar di hari-hari itu ikut berkurang dan tidak bisa dibatalkan.\nFile backup akan diunduh dulu.\n\nKetik HAPUS untuk lanjut:`);
+  if((ok||"").trim().toUpperCase()!=="HAPUS"){ stat($("kelolaStatus"),"Batal, tidak ada yang dihapus."); return; }
+  const l=readStore(); if(l===null){ stat($("kelolaStatus"),"Riwayat tidak bisa dibaca, hapus dibatalkan.","err"); return; }
+  $("exportBtn").click();  /* backup dulu */
+  let c=0; for(const d of l){ const before=(d.rows||[]).length; d.rows=(d.rows||[]).filter(r=>keyOf(r.nama)!==x.k); if(d.rows.length!==before) c++; }
+  try{ writeStore(l); }catch{ stat($("kelolaStatus"),"Gagal menyimpan, tidak ada yang dihapus.","err"); return; }
+  const a=arsipSet(); a.delete(x.k); setArsip(a);
+  loadAll(); stat($("kelolaStatus"),`${x.nama} dihapus dari ${c} hari. Backup sebelum dihapus sudah diunduh.`,"good");
+}
+$("kelolaSearch").oninput=()=>renderKelola();
+
+/* ---------- daftar Tim Gudang ---------- */
+function renderGudang(){
+  const l=gudangList(); $("gudangCount").textContent=l.length+" orang";
+  const z=$("gudangChips"); z.innerHTML="";
+  for(const n of l){ const b=document.createElement("button"); b.setAttribute("aria-pressed","false"); b.title="Hapus dari Tim Gudang"; b.textContent=n+"  ×";
+    b.onclick=()=>{ if(!confirm(`Keluarkan "${n}" dari Tim Gudang?`)) return; setGudangList(gudangList().filter(x=>x!==n)); gudangChanged(); }; z.appendChild(b); }
+}
+function gudangChanged(){ renderGudang(); if(dirty){ cur.rows.forEach(r=>{ if(r.cat==="gudang"&&!gudangMatch(r.nama)&&!isGudang(r.jabatan)) r.cat=catOf(r.jabatan); fixCat(r); }); renderToday(); renderHist(); } else loadAll(); }
+$("gudangAdd").onclick=()=>{ const v=$("gudangIn").value.trim(); if(!v) return; if(!gudangMatch(v)) setGudangList([...gudangList(),v]); $("gudangIn").value=""; gudangChanged(); };
+$("gudangIn").onkeydown=e=>{ if(e.key==="Enter") $("gudangAdd").click(); };
+renderGudang();
+
 /* backup / impor */
 $("reloadBtn").onclick=()=>loadAll();
 $("exportBtn").onclick=()=>{
@@ -657,7 +1229,7 @@ $("importIn").onchange=async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f) return;
   let list; try{ list=JSON.parse(await f.text()); if(!Array.isArray(list)) list=[list]; }catch{ stat($("dataStatus"),"File backup tidak valid.","err"); return; }
   list=list.filter(d=>d&&/^\d{4}-\d{2}-\d{2}$/.test(d.tanggal)&&Array.isArray(d.rows));
-  let ok=0; for(const d of list){ stat($("dataStatus"),`Mengimpor ${ok+1}/${list.length}…`); try{ await api("save",{data:d}); riwayat.set(d.tanggal,d); ok++; }catch(err){ stat($("dataStatus"),`Gagal di ${d.tanggal}: ${err.message}`,"err"); break; } }
+  let ok=0; for(const d of list){ stat($("dataStatus"),`Mengimpor ${ok+1}/${list.length}…`); try{ await api("save",{data:d}); riwayat.set(d.tanggal,{...d,rows:d.rows.map(r=>fixCat({...r}))}); ok++; }catch(err){ stat($("dataStatus"),`Gagal di ${d.tanggal}: ${err.message}`,"err"); break; } }
   
   stat($("dataStatus"),`${ok} hari diimpor.`,"good"); afterLoad();
 };

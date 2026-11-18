@@ -91,6 +91,8 @@ tr.sum td{font-weight:600;border-bottom:none}
 .row .who{min-width:0;display:flex;flex-direction:column}
 .row .who input{border:none;background:transparent;font:600 14px var(--f-body);padding:2px 0}
 .row .who select{border:none;background:transparent;color:var(--muted);font:13px var(--f-body);padding:0;width:auto}
+#fpPanel .who select{border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--fg);width:100%;background:var(--surface)}
+#fpPanel .row{grid-template-columns:44px 1fr}
 .row.abs{background:var(--absent-bg)} .row.abs .no{color:var(--absent)}
 .tg{font:600 12px var(--f-body);padding:6px 10px;border-radius:999px;min-width:84px;justify-content:center}
 .tg.on{border-color:var(--ok);color:var(--ok)} .tg.off{border-color:var(--absent);color:var(--absent)}
@@ -178,9 +180,9 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">HSE · Daftar Hadir SMT · versi 31-10 v3</div>
+    <div class="eyebrow">HSE · Daftar Hadir SMT · versi 18-11 fingerprint</div>
     <h1>Rekap Absensi SMT</h1>
-    <p>Foto lembar daftar hadir. Nomor yang dilingkari terbaca sebagai tidak hadir, lalu direkap dan disimpan per hari di HP ini.</p>
+    <p>Foto lembar daftar hadir atau import Excel fingerprint. Nomor yang dilingkari terbaca sebagai tidak hadir, lalu direkap dan disimpan per hari di HP ini.</p>
   </header>
 
   <details class="panel" id="setPanel">
@@ -211,6 +213,31 @@ pre.wa{white-space:pre-wrap;font:13px/1.5 var(--f-mono);background:var(--bg);bor
       </div>
       <p class="status" id="status" role="status"></p>
       <p class="hint">Satu lembar per foto, tegak, terang, semua nomor kelihatan. Boleh beberapa halaman sekaligus.</p>
+    </section>
+
+    <section class="panel" id="fpPanel">
+      <h2>1b · Import data fingerprint (Excel)</h2>
+      <p class="hint">Upload file tarikan mesin fingerprint (.xls / .xlsx / .csv). Orang yang tidak punya scan di tanggal itu otomatis jadi <b>tidak hadir</b>. Satu file boleh berisi banyak tanggal.</p>
+      <div class="btns">
+        <label class="btn primary">📂 Pilih file fingerprint<input id="fpIn" type="file" accept=".xls,.xlsx,.csv,.txt,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"></label>
+      </div>
+      <p class="status" id="fpStatus" role="status"></p>
+      <div id="fpBox" hidden style="display:flex;flex-direction:column;gap:12px">
+        <details id="fpMapBox">
+          <summary style="cursor:pointer;font-weight:600">⚙️ Kolom yang terbaca <span class="hint" id="fpMapSum"></span></summary>
+          <div class="meta" id="fpMap" style="margin-top:10px"></div>
+        </details>
+        <div class="meta">
+          <label class="f" for="fpBatas">Batas jam hadir SMT (opsional)<input id="fpBatas" type="time" placeholder="08:00"></label>
+        </div>
+        <p class="hint" style="margin:0">Batas jam: kalau diisi (mis. 07:30), scan pertama setelah jam itu ditandai <i>tidak hadir SMT</i> dengan keterangan "Terlambat, scan jam …". Kosongkan kalau semua yang scan dihitung hadir.</p>
+        <div id="fpUnk"></div>
+        <div id="fpDays"></div>
+        <div class="btns">
+          <button class="primary" id="fpSave">Simpan ke riwayat</button>
+          <button id="fpCancel">Batal</button>
+        </div>
+      </div>
     </section>
 
     <section class="panel">
@@ -1403,6 +1430,242 @@ window.addEventListener("beforeunload",e=>{ if(dirty&&cur.rows.length){ e.preven
 /* ---------- start ---------- */
 { const d=new Date(); $("bulan").value=`${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
 renderToday(); renderHist(); connect();
+</script>
+<script>
+/* ---------- IMPORT DATA FINGERPRINT (Excel tarikan mesin) ----------
+   Format utama: "StandardReport.xls" sheet "Lap. Log Absen" (blok ID:/Nama:/Dept. + baris jam scan per tanggal).
+   Cadangan: tabel log biasa (kolom Nama + Tanggal/Waktu). Riwayat lama tidak dihapus. */
+const FPMAP_KEY="smt_fpmap";
+function fpMapGet(){ try{ const v=JSON.parse(localStorage.getItem(FPMAP_KEY)||"{}"); return v&&typeof v==="object"?v:{}; }catch{ return {}; } }
+function fpMapSet(m){ try{ localStorage.setItem(FPMAP_KEY,JSON.stringify(m)); }catch{} }
+async function getXLSX(){
+  if(window.XLSX) return window.XLSX;
+  for(const u of ["https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js","https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js","https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"]){
+    try{ await loadScript(u); if(window.XLSX) return window.XLSX; }catch{} }
+  throw new Error("Perlu koneksi internet untuk membaca Excel (pustaka Excel tidak bisa dimuat).");
+}
+const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const isoAdd = (iso,n) => { const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return isoOf(d); };
+const isoDiff = (a,b) => Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5);
+const hhmm = d => pad(d.getHours())+":"+pad(d.getMinutes());
+function timesIn(v){
+  if(v instanceof Date){ return (v.getFullYear()<1901 || v.getHours()||v.getMinutes()) ? [hhmm(v)] : []; }
+  if(typeof v==="number" && v>0 && v<1){ const m=Math.round(v*1440); return [pad(Math.floor(m/60))+":"+pad(m%60)]; }
+  const s=String(v??""), out=[], re=/([01]?\d|2[0-3])[:.]([0-5]\d)/g; let m;
+  while((m=re.exec(s))) out.push(pad(+m[1])+":"+m[2]);
+  return out;
+}
+function dateIn(v){
+  if(v instanceof Date) return v.getFullYear()>1901 ? isoOf(v) : "";
+  if(typeof v==="number" && v>20000 && v<80000){ const d=new Date(Math.round((v-25569)*864e5)); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`; }
+  const s=String(v??"").trim(); let m=s.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if(m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  m=s.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);            /* format Indonesia: tgl/bln/thn */
+  if(m) return `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`;
+  return "";
+}
+const cellS = v => v instanceof Date ? isoOf(v) : String(v??"").trim();
+
+/* Format 1: Laporan Detail Absensi / Lap. Log Absen */
+function parseStdLog(rows){
+  let start="", end="", hdr=-1;
+  for(let i=0;i<Math.min(rows.length,12);i++){
+    const line=rows[i].map(cellS).join(" ");
+    const m=line.match(/(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})/); if(m&&!start){ start=m[1]; end=m[2]; continue; }
+    if(start && hdr<0){ const nums=rows[i].filter(v=>/^\d{1,2}$/.test(cellS(v))&&+cellS(v)>=1&&+cellS(v)<=31).length; if(nums>=3){ hdr=i; break; } }
+  }
+  if(!start||hdr<0) return null;
+  const colDate={}; let curD=start;
+  rows[hdr].forEach((v,j)=>{ const s=cellS(v); if(!/^\d{1,2}$/.test(s)) return; const d=+s;
+    for(let k=0;k<35;k++){ if(+curD.slice(8)===d) break; curD=isoAdd(curD,1); }
+    colDate[j]=curD; curD=isoAdd(curD,1); });
+  const people=[];
+  for(let i=hdr+1;i<rows.length;i++){
+    const r=rows[i]; if(!/^ID\s*:?$/i.test(cellS(r[0]))) continue;
+    const after=re=>{ const k=r.findIndex(v=>re.test(cellS(v))); if(k<0) return ""; for(let j=k+1;j<r.length;j++){ const s=cellS(r[j]); if(s) return s; } return ""; };
+    let id=""; for(let j=1;j<r.length;j++){ const s=cellS(r[j]); if(s){ id=s; break; } }
+    const nama=after(/^nama\s*:?$/i), dept=after(/^dep(t|artemen)?\.?\s*:?$/i);
+    const t=rows[i+1]||[], scans={};
+    if(!/^ID\s*:?$/i.test(cellS(t[0]))) for(const j in colDate){ const x=timesIn(t[j]); if(x.length) scans[colDate[j]]=x.sort(); }
+    if(nama) people.push({id,nama,dept,scans});
+  }
+  const dates=[...new Set(Object.values(colDate))].sort();
+  return people.length ? {format:"Laporan Log Absen mesin fingerprint", start, end, dates, people} : null;
+}
+/* Format 2: tabel log biasa — satu baris per scan / per hari */
+function parseTable(rows){
+  let h=-1, ci={};
+  for(let i=0;i<Math.min(rows.length,20);i++){
+    const c=rows[i].map(v=>cellS(v).toLowerCase());
+    const f=re=>c.findIndex(x=>re.test(x));
+    const nama=f(/^(nama|name)\b/), tgl=f(/tanggal|^tgl|date/), jam=f(/^(jam|time|waktu|scan|check|masuk|in)\b/);
+    if(nama>=0 && (tgl>=0||jam>=0)){ h=i; ci={nama,tgl,id:f(/^(no\.?\s*)?(id|pin|ac-?no|nik|user\s*id|no\.?\s*peg)/), dept:f(/dep(t|artemen)|bagian|jabatan/),
+      jams:c.map((x,j)=>j).filter(j=>j!==tgl && /^(jam|time|waktu|scan|check|masuk|pulang|keluar|in|out)\b/.test(c[j]))}; break; }
+  }
+  if(h<0) return null;
+  const pm=new Map(), ds=new Set();
+  for(let i=h+1;i<rows.length;i++){
+    const r=rows[i], nama=cellS(r[ci.nama]); if(!nama) continue;
+    let iso=ci.tgl>=0?dateIn(r[ci.tgl]):""; if(!iso) for(const j of ci.jams){ iso=dateIn(r[j]); if(iso) break; }
+    if(!iso) continue; ds.add(iso);
+    let tm=[]; for(const j of ci.jams) tm.push(...timesIn(r[j]));
+    if(!ci.jams.length && ci.tgl>=0) tm=timesIn(r[ci.tgl]);
+    const id=ci.id>=0?cellS(r[ci.id]):""; const k=id+"|"+keyOf(nama);
+    let p=pm.get(k); if(!p){ p={id,nama,dept:ci.dept>=0?cellS(r[ci.dept]):"",scans:{}}; pm.set(k,p); }
+    if(tm.length) p.scans[iso]=[...(p.scans[iso]||[]),...tm].sort();
+  }
+  const dates=[...ds].sort();
+  return pm.size&&dates.length ? {format:"Tabel log scan", start:dates[0], end:dates[dates.length-1], dates, people:[...pm.values()]} : null;
+}
+function parseFP(wb, X){
+  const order=[...wb.SheetNames].sort((a,b)=>(/log|detail/i.test(b))-(/log|detail/i.test(a)));
+  for(const n of order){ const rows=X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:""}); const r=parseStdLog(rows); if(r) return {...r,sheet:n}; }
+  for(const n of order){ const rows=X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:""}); const r=parseTable(rows); if(r) return {...r,sheet:n}; }
+  return null;
+}
+
+/* cocokkan nama mesin (mis. "Prasetyo_R", "Bayu_Aji") ke nama di riwayat ("Prasetyo Rahardjo", "Bayu Aji Sentiko") */
+const fpNorm = n => String(n||"").replace(/[_.]+/g," ").replace(/\s+/g," ").trim();
+const fpTitle = n => fpNorm(n).toLowerCase().replace(/(^|\s)([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+function fpScore(fp, nm){
+  const a=toks(fpNorm(fp)), b=toks(nm); if(!a.length||!b.length) return 0;
+  if(keyOf(fp)===keyOf(nm)) return 1;
+  if(a.length<=b.length){ let ok=true, full=0;
+    for(let i=0;i<a.length;i++){ const x=a[i], y=b[i]; if(x===y){ if(x.length>=3) full++; continue; } if(y.startsWith(x)||x.startsWith(y)) continue; ok=false; break; }
+    if(ok&&full>=1) return 0.95-0.02*(b.length-a.length); }
+  if(b.length<a.length){ let ok=true, full=0;
+    for(let i=0;i<b.length;i++){ const x=a[i], y=b[i]; if(x===y){ if(x.length>=3) full++; continue; } if(y.startsWith(x)||x.startsWith(y)) continue; ok=false; break; }
+    if(ok&&full>=1) return 0.85; }
+  const s=sim(fpNorm(fp),nm); return s>=0.82 ? s*0.9 : 0;
+}
+
+let fp=null; /* {data, people:[{...,key,pick:{nama,jabatan,cat}|null, sugg:[], auto, active:{from,to}}], days:[...]} */
+const FP_NEW="__baru__";
+function fpBuild(data){
+  const known=[...knownNames(null).values()], saved=fpMapGet(), end=data.end||data.dates[data.dates.length-1];
+  const people=[];
+  for(const p of data.people){
+    const k=p.id+"|"+keyOf(p.nama); const sd=Object.keys(p.scans).sort();
+    const sc=known.map(x=>({x,s:fpScore(p.nama,x.nama)})).filter(o=>o.s>0).sort((a,b)=>b.s-a.s);
+    let pick=null, auto="", amb=false;
+    if(saved[k]){ pick={...saved[k]}; auto="tersimpan";
+      /* jabatan & kategori selalu ikut data absensi SMT terbaru, bukan yang tersimpan saat import dulu */
+      const kx=known.find(x=>keyOf(x.nama)===keyOf(pick.nama)); if(kx){ pick.nama=kx.nama; pick.jabatan=kx.jabatan; pick.cat=catOf(kx.jabatan); } }
+    else if(sc.length){ amb = sc.length>1 && sc[0].s-sc[1].s<0.03; pick={nama:sc[0].x.nama,jabatan:sc[0].x.jabatan,cat:catOf(sc[0].x.jabatan)}; auto=amb?"ragu":"otomatis"; }
+    const kn = pick && pick.nama!==FP_NEW ? known.find(x=>keyOf(x.nama)===keyOf(pick.nama)) : null;
+    let from = sd[0]||"", to = "";
+    if(kn && kn.first && kn.first<data.start) from=data.start;          /* sudah ada di riwayat sebelum periode file */
+    if(sd.length && isoDiff(sd[sd.length-1],end)>7) to=sd[sd.length-1];  /* > 7 hari tanpa scan sampai akhir file → dianggap keluar */
+    people.push({...p,key:k,pick,auto,amb,sugg:sc.slice(0,6).map(o=>o.x.nama),from,to,nScan:sd.length});
+  }
+  /* satu nama riwayat dipakai 2 ID mesin → tandai ragu */
+  const cnt={}; for(const p of people) if(p.pick&&p.pick.nama!==FP_NEW) cnt[keyOf(p.pick.nama)]=(cnt[keyOf(p.pick.nama)]||0)+1;
+  for(const p of people) if(p.pick&&p.auto==="otomatis"&&cnt[keyOf(p.pick.nama)]>1){ p.amb=true; p.auto="ragu"; }
+  fp={data,people,known};
+}
+const fpActiveOn = (p,t) => p.nScan>0 && p.from && t>=p.from && (!p.to || t<=p.to);
+function fpPerson(p){
+  if(p.pick && p.pick.nama!==FP_NEW) return {nama:p.pick.nama, jabatan:p.pick.jabatan||"", cat:p.pick.cat||catOf(p.pick.jabatan)};
+  const cat=(p.pick&&p.pick.cat)||"helper";
+  return {nama:fpTitle(p.nama), jabatan:(p.pick&&p.pick.jabatan)||CSHORT[cat]||"Helper", cat};
+}
+function fpBatas(){ return $("fpBatas").value||""; }
+function fpDayRows(t){
+  const batas=fpBatas(), old=riwayat.get(t), om=new Map((old?.rows||[]).map(r=>[keyOf(r.nama),r]));
+  const rows=[], used=new Set();
+  for(const p of fp.people){ if(!fpActiveOn(p,t)) continue;
+    const who=fpPerson(p), k=keyOf(who.nama); if(!k||used.has(k)) continue; used.add(k);
+    const sc=p.scans[t]||[]; let absen=!sc.length, ket="";
+    if(sc.length && batas && sc[0]>batas){ absen=true; ket=`Terlambat, scan pertama ${sc[0]}`; }
+    const o=om.get(k); const r={no:0,nama:who.nama,jabatan:who.jabatan,cat:who.cat,absen,alasan:"",ket};
+    if(absen && o && o.absen){ r.alasan=o.alasan||""; r.ket=o.ket||ket; }
+    rows.push(fixCat(r)); }
+  /* nama yang sudah ada di riwayat tanggal itu tapi tidak ada di mesin: tetap disimpan apa adanya */
+  for(const o of (old?.rows||[])){ const k=keyOf(o.nama); if(k && !used.has(k)){ used.add(k); rows.push(fixCat({...o})); } }
+  rows.forEach((r,i)=>r.no=i+1);
+  return rows;
+}
+function fpDayDefault(t,rows){
+  if(riwayat.has(t)) return false;
+  const act=rows.length, hd=rows.filter(r=>!r.absen).length;
+  return act>0 && hd/act>=0.3;
+}
+function fpRender(){
+  const d=fp.data, box=$("fpBox"); box.hidden=false;
+  $("fpMapSum").textContent=`· sheet "${d.sheet}" · ${d.format}`;
+  $("fpMap").innerHTML=`<p class="hint" style="margin:0">Periode ${fmtShort(d.start)} – ${fmtLong(d.end)} · ${d.dates.length} tanggal · ${d.people.length} ID di mesin.</p>`;
+  /* --- nama --- */
+  const act=fp.people.filter(p=>p.nScan>0), zero=fp.people.filter(p=>!p.nScan);
+  const need=act.filter(p=>!p.pick||p.amb), ok=act.filter(p=>p.pick&&!p.amb);
+  const opts=(p)=>{ const sel=p.pick?p.pick.nama:FP_NEW; const names=[...new Set([...p.sugg,...fp.known.map(x=>x.nama).sort((a,b)=>a.localeCompare(b))])];
+    return `<option value="${FP_NEW}"${sel===FP_NEW?" selected":""}>➕ Orang baru: ${esc(fpTitle(p.nama))}</option>`+names.map(n=>`<option${n===sel?" selected":""}>${esc(n)}</option>`).join(""); };
+  const catSel=(p)=>`<select data-cat="${esc(p.key)}" ${p.pick&&p.pick.nama!==FP_NEW?"hidden":""}>${CAT_KEYS.map(k=>`<option value="${k}"${((p.pick&&p.pick.cat)||"helper")===k?" selected":""}>${CATS[k]}</option>`).join("")}</select>`;
+  const line=p=>`<div class="row" style="grid-template-columns:auto 1fr"><div class="no" title="ID mesin">${esc(p.id)}</div><div class="who" style="display:flex;flex-direction:column;gap:6px"><div><b>${esc(p.nama)}</b> <span class="hint">· ${p.nScan} hari scan${p.pick&&p.pick.nama!==FP_NEW?` · jabatan: ${esc(p.pick.jabatan||"-")}`:""}${p.amb?" · ⚠ cek, ada nama mirip":""}</span></div><select data-fp="${esc(p.key)}">${opts(p)}</select>${catSel(p)}</div></div>`;
+  let h="";
+  if(need.length) h+=`<h3 style="margin:4px 0">⚠ ${need.length} nama perlu dicek</h3><p class="hint" style="margin:0">Pilih nama yang sama di daftar SMT, atau "Orang baru" lalu pilih kategorinya. Pilihan diingat untuk import berikutnya.</p>${need.map(line).join("")}`;
+  h+=`<details><summary style="cursor:pointer">✓ ${ok.length} nama cocok otomatis (ketuk untuk cek / ubah)</summary>${ok.map(line).join("")}</details>`;
+  if(zero.length) h+=`<p class="hint" style="margin:0">Tidak dihitung (tidak pernah scan di periode ini): ${zero.map(p=>esc(fpTitle(p.nama))).join(", ")}.</p>`;
+  const gone=act.filter(p=>p.to); if(gone.length) h+=`<p class="hint" style="margin:0">Dianggap sudah keluar setelah scan terakhir (tidak scan &gt; 7 hari sampai akhir file): ${gone.map(p=>`${esc(fpTitle(p.nama))} (${fmtShort(p.to)})`).join(", ")}.</p>`;
+  $("fpUnk").innerHTML=h;
+  $("fpUnk").querySelectorAll("select[data-fp]").forEach(s=>s.onchange=()=>{ const p=fp.people.find(x=>x.key===s.dataset.fp);
+    if(s.value===FP_NEW){ const c=$("fpUnk").querySelector(`select[data-cat="${CSS.escape(p.key)}"]`); p.pick={nama:FP_NEW,cat:c?c.value:"helper",jabatan:""}; }
+    else { const kn=fp.known.find(x=>x.nama===s.value); p.pick={nama:s.value,jabatan:kn?kn.jabatan:"",cat:catOf(kn?kn.jabatan:"")}; }
+    p.amb=false; p.auto="dipilih"; fpRenderDays(); const c=$("fpUnk").querySelector(`select[data-cat="${CSS.escape(p.key)}"]`); if(c) c.hidden=s.value!==FP_NEW; });
+  $("fpUnk").querySelectorAll("select[data-cat]").forEach(s=>s.onchange=()=>{ const p=fp.people.find(x=>x.key===s.dataset.cat); p.pick={nama:FP_NEW,cat:s.value,jabatan:CSHORT[s.value]}; p.amb=false; fpRenderDays(); });
+  fpRenderDays(true);
+}
+function fpRenderDays(first){
+  const prev={}; $("fpDays").querySelectorAll("input[data-d]").forEach(c=>prev[c.dataset.d]=c.checked);
+  let h=`<h3 style="margin:4px 0">Tanggal yang akan disimpan</h3><div style="overflow-x:auto"><table class="tbl" style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th></th><th style="text-align:left">Tanggal</th><th>Orang</th><th>Hadir</th><th>Tidak</th><th style="text-align:left">Catatan</th></tr></thead><tbody>`;
+  for(const t of fp.data.dates){ const rows=fpDayRows(t), a=rows.filter(r=>r.absen).length;
+    const chk = (!first && t in prev) ? prev[t] : fpDayDefault(t,rows);
+    const sun=new Date(t+"T00:00:00").getDay()===0;
+    const note= riwayat.has(t) ? "Sudah ada di riwayat — centang untuk perbarui dari fingerprint (alasan yang sudah diisi tetap)" : sun ? "Minggu" : (rows.length && (rows.length-a)/rows.length<0.3) ? "Sedikit yang scan — libur?" : "";
+    h+=`<tr style="border-top:1px solid var(--line)"><td><input type="checkbox" data-d="${t}"${chk?" checked":""} aria-label="Simpan ${t}"></td><td>${fmtDay(t)}, ${fmtShort(t)}</td><td class="n" style="text-align:center">${rows.length}</td><td class="n" style="text-align:center">${rows.length-a}</td><td class="n${a?" abs":""}" style="text-align:center">${a}</td><td class="hint">${note}</td></tr>`; }
+  h+=`</tbody></table></div>`;
+  $("fpDays").innerHTML=h;
+}
+
+$("fpIn").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  stat($("fpStatus"),"Membaca file…"); $("fpBox").hidden=true;
+  try{
+    const X=await getXLSX();
+    const buf=await f.arrayBuffer();
+    const wb=X.read(buf,{type:"array",cellDates:true});
+    const data=parseFP(wb,X);
+    if(!data){ stat($("fpStatus"),"Format file belum dikenali. Pastikan file tarikan mesin berisi kolom Nama dan tanggal/jam scan (mis. sheet \"Lap. Log Absen\"). Kirim contohnya supaya formatnya ditambahkan.","err"); return; }
+    fpBuild(data); fpRender();
+    const need=fp.people.filter(p=>p.nScan&&(!p.pick||p.amb)).length;
+    stat($("fpStatus"),`Terbaca ${data.people.length} ID, ${data.dates.length} tanggal (${fmtShort(data.start)} – ${fmtShort(data.end)}).`+(need?` ${need} nama perlu dicek di bawah.`:" Semua nama cocok.")+" Centang tanggal lalu tekan Simpan.", need?"":"good");
+  }catch(err){ stat($("fpStatus"),"Gagal membaca file: "+err.message,"err"); }
+};
+$("fpBatas").value=ls.get("smt_fp_batas")||"";
+$("fpBatas").onchange=()=>{ ls.set("smt_fp_batas",$("fpBatas").value); if(fp) fpRenderDays(); };
+$("fpCancel").onclick=()=>{ fp=null; $("fpBox").hidden=true; stat($("fpStatus"),""); };
+$("fpSave").onclick=async()=>{
+  if(!fp) return;
+  const days=[...$("fpDays").querySelectorAll("input[data-d]:checked")].map(c=>c.dataset.d).sort();
+  if(!days.length){ stat($("fpStatus"),"Belum ada tanggal yang dicentang.","err"); return; }
+  const need=fp.people.filter(p=>p.nScan&&(!p.pick||p.amb));
+  if(need.length && !confirm(`${need.length} nama belum dicek (ditandai ⚠). Tetap simpan dengan pilihan yang ada sekarang?`)) return;
+  if(dirty && cur.rows.length && days.includes(cur.tanggal) && !confirm("Ada perubahan di \"Hari ini\" yang belum disimpan untuk tanggal yang sama. Lanjut dan pakai data fingerprint?")) return;
+  /* ingat pilihan nama untuk import berikutnya */
+  const m=fpMapGet(); for(const p of fp.people) if(p.pick){ const w=fpPerson(p); m[p.key]={nama:p.pick.nama===FP_NEW?w.nama:p.pick.nama,jabatan:w.jabatan,cat:w.cat}; } fpMapSet(m);
+  $("fpSave").disabled=true; let ok=0, absTot=0;
+  try{
+    for(const t of days){ stat($("fpStatus"),`Menyimpan ${ok+1}/${days.length} (${fmtShort(t)})…`);
+      const rows=fpDayRows(t); absTot+=rows.filter(r=>r.absen).length;
+      const old=riwayat.get(t);
+      const body=bodyOf({tanggal:t,waktu:(old&&old.waktu)||"07.00 – selesai",rows});
+      await api("save",{data:body}); riwayat.set(t,{...body,rows:body.rows.map(r=>fixCat({...r}))}); ok++; }
+    const last=days[days.length-1];
+    stat($("fpStatus"),`${ok} hari tersimpan dari fingerprint (${absTot} catatan tidak hadir). Buka tiap tanggal di "Tanggal SMT" untuk mengisi alasan tidak hadir. Sekarang dibuka: ${fmtLong(last)}.`,"good");
+    fp=null; $("fpBox").hidden=true;
+    loadDay(last); renderHist();
+  }catch(err){ stat($("fpStatus"),`Berhenti setelah ${ok} hari: ${err.message}`,"err"); renderHist(); }
+  $("fpSave").disabled=false;
+};
 </script>
 </body>
 </html>
